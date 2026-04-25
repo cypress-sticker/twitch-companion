@@ -37,7 +37,20 @@ function loadSettings() {
   try {
     const data = fs.readFileSync(getSettingsPath(), 'utf8');
     const saved = JSON.parse(data);
-    return { ...DEFAULT_SETTINGS, ...saved };
+    return {
+      ...DEFAULT_SETTINGS,
+      ...saved,
+      auth: { ...DEFAULT_SETTINGS.auth, ...(saved.auth || {}) },
+      alerts: {
+        follow:        { ...DEFAULT_SETTINGS.alerts.follow,        ...(saved.alerts?.follow || {}) },
+        subscribe:     { ...DEFAULT_SETTINGS.alerts.subscribe,     ...(saved.alerts?.subscribe || {}) },
+        raid:          { ...DEFAULT_SETTINGS.alerts.raid,          ...(saved.alerts?.raid || {}) },
+        bits:          { ...DEFAULT_SETTINGS.alerts.bits,          ...(saved.alerts?.bits || {}) },
+        channelPoints: { ...DEFAULT_SETTINGS.alerts.channelPoints, ...(saved.alerts?.channelPoints || {}) },
+      },
+      periodicComments: { ...DEFAULT_SETTINGS.periodicComments, ...(saved.periodicComments || {}) },
+      overlay: { ...DEFAULT_SETTINGS.overlay, ...(saved.overlay || {}) },
+    };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }

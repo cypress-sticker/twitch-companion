@@ -72,6 +72,7 @@ function startOAuthFlow() {
     authWindow.loadURL(authUrl.toString());
 
     const handleNavigate = (event, url) => {
+      if (completed) return;
       if (!url.startsWith(REDIRECT_URI)) return;
       completed = true;
       authWindow.destroy();

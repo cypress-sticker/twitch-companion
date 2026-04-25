@@ -307,8 +307,11 @@ function openAlertModal(alertKey) {
 
   document.getElementById('modal-alert-title').textContent = ALERT_LABELS[alertKey] + 'の設定';
 
-  // ON/OFF
-  document.getElementById('modal-enabled-toggle').classList.toggle('on', s.enabled);
+  // ON/OFF — ホームのトグルDOM状態を優先（settings未保存の場合に対応）
+  const homeId = ALERT_KEY_TO_HOME_ID[alertKey];
+  const homeToggle = document.getElementById('home-' + homeId);
+  const isEnabled = homeToggle ? homeToggle.classList.contains('on') : s.enabled;
+  document.getElementById('modal-enabled-toggle').classList.toggle('on', isEnabled);
 
   // 画像
   const imageName = s.image || '';
@@ -392,7 +395,7 @@ function updateModalPreview() {
   const previewImg = document.getElementById('preview-img');
   const port = settings?.overlay?.port || 3001;
   if (imageName && imageName !== '選択なし') {
-    previewImg.src = `http://localhost:${port}/custom/${imageName}`;
+    previewImg.src = `http://localhost:${port}/custom/${encodeURIComponent(imageName)}`;
     previewImg.style.display = 'block';
   } else {
     previewImg.style.display = 'none';

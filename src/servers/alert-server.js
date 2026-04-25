@@ -148,7 +148,7 @@ function startHttpServer(port) {
         res.end();
       }
     } else if (req.url.startsWith('/custom/')) {
-      const filePath = path.join(assetsPath, req.url.slice(1));
+      const filePath = path.join(assetsPath, decodeURIComponent(req.url.slice(1)));
       if (fs.existsSync(filePath)) {
         const ext = path.extname(filePath).toLowerCase();
         const mimeTypes = { '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.gif': 'image/gif', '.mp3': 'audio/mpeg' };

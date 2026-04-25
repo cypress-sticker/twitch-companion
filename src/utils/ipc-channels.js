@@ -29,4 +29,8 @@ module.exports = {
   // Overlay
   OVERLAY_URL: 'overlay:url',
   OVERLAY_SHOW_ALERT: 'overlay:show-alert',
+
+  // Asset File Selection
+  ALERT_SELECT_IMAGE: 'alert:select-image',
+  ALERT_SELECT_SOUND: 'alert:select-sound',
 };

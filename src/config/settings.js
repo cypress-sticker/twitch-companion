@@ -11,11 +11,11 @@ const DEFAULT_SETTINGS = {
     broadcasterName: '',
   },
   alerts: {
-    follow:        { enabled: true, message: '{user} さんがフォローしました！', sound: 'default', image: '' },
-    subscribe:     { enabled: true, message: '{user} さんがサブスクしました！', sound: 'default', image: '' },
-    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', sound: 'default', image: '' },
-    bits:          { enabled: false, message: '{user} さんから {amount} Bits！', sound: 'default', image: '' },
-    channelPoints: { enabled: false, message: '{user} さんがポイント交換！', sound: 'default', image: '' },
+    follow:        { enabled: true,  message: '{user} さんがフォローしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+    subscribe:     { enabled: true,  message: '{user} さんがサブスクしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+    bits:          { enabled: false, message: '{user} さんから {amount} Bits！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+    channelPoints: { enabled: false, message: '{user} さんがポイント交換！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
   },
   periodicComments: {
     enabled: false,
@@ -25,7 +25,6 @@ const DEFAULT_SETTINGS = {
   overlay: {
     port: 3001,
     displayDuration: 5000,
-    animation: 'slide-up',
   },
 };
 
@@ -41,13 +40,20 @@ function loadSettings() {
       ...DEFAULT_SETTINGS,
       ...saved,
       auth: { ...DEFAULT_SETTINGS.auth, ...(saved.auth || {}) },
-      alerts: {
-        follow:        { ...DEFAULT_SETTINGS.alerts.follow,        ...(saved.alerts?.follow || {}) },
-        subscribe:     { ...DEFAULT_SETTINGS.alerts.subscribe,     ...(saved.alerts?.subscribe || {}) },
-        raid:          { ...DEFAULT_SETTINGS.alerts.raid,          ...(saved.alerts?.raid || {}) },
-        bits:          { ...DEFAULT_SETTINGS.alerts.bits,          ...(saved.alerts?.bits || {}) },
-        channelPoints: { ...DEFAULT_SETTINGS.alerts.channelPoints, ...(saved.alerts?.channelPoints || {}) },
-      },
+      alerts: (() => {
+        const mergeAlert = (def, saved) => ({
+          ...def,
+          ...(saved || {}),
+          soundType: (saved?.soundType) || (saved?.sound === 'default' ? 'default' : saved?.sound ? 'custom' : 'default'),
+        });
+        return {
+          follow:        mergeAlert(DEFAULT_SETTINGS.alerts.follow,        saved.alerts?.follow),
+          subscribe:     mergeAlert(DEFAULT_SETTINGS.alerts.subscribe,     saved.alerts?.subscribe),
+          raid:          mergeAlert(DEFAULT_SETTINGS.alerts.raid,          saved.alerts?.raid),
+          bits:          mergeAlert(DEFAULT_SETTINGS.alerts.bits,          saved.alerts?.bits),
+          channelPoints: mergeAlert(DEFAULT_SETTINGS.alerts.channelPoints, saved.alerts?.channelPoints),
+        };
+      })(),
       periodicComments: { ...DEFAULT_SETTINGS.periodicComments, ...(saved.periodicComments || {}) },
       overlay: { ...DEFAULT_SETTINGS.overlay, ...(saved.overlay || {}) },
     };

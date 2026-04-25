@@ -306,11 +306,27 @@ body {
   border-radius: 16px;
   width: 520px;
   max-height: 85vh;
-  overflow-y: auto;
   padding: 24px;
   display: flex;
   flex-direction: column;
+  gap: 0;
+  overflow: hidden;
+}
+.modal-settings {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
   gap: 20px;
+  padding: 20px 0;
+}
+.modal-bottom {
+  flex-shrink: 0;
+  border-top: 1px solid #2a2a2e;
+  padding-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 .modal-header {
   display: flex;
@@ -348,15 +364,11 @@ body {
 .modal-preview-area {
   background: #0e0e10;
   border-radius: 12px;
-  padding: 20px;
+  padding: 16px 20px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
   overflow: visible;
-  position: sticky;
-  top: 0;
-  z-index: 10;
 }
 .alert-preview {
   background: rgba(24, 24, 27, 0.95);
@@ -368,6 +380,7 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex: 1;
 }
 .alert-preview img.img-sm { width: 32px; height: 32px; border-radius: 6px; }
 .alert-preview img.img-md { width: 48px; height: 48px; border-radius: 8px; }

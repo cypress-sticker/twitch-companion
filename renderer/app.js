@@ -7,9 +7,29 @@ let authenticated = false;
 
 const MAX_COMMENTS = 10;
 
+// ─── Theme ──────────────────────────────────────────────────────────────────
+
+function applyTheme(theme) {
+  const isLight = theme === 'light';
+  document.body.classList.toggle('light-mode', isLight);
+  const btn = document.getElementById('theme-btn');
+  if (btn) btn.textContent = isLight ? '☀️ ライト' : '🌙 ダーク';
+}
+
+async function toggleTheme() {
+  if (!settings) return;
+  const next = document.body.classList.contains('light-mode') ? 'dark' : 'light';
+  applyTheme(next);
+  settings.theme = next;
+  await window.api.saveSettings({ theme: next });
+}
+
 // Initialize
 document.addEventListener('DOMContentLoaded', async () => {
   settings = await window.api.loadSettings();
+
+  // テーマを最初に適用（ちらつき防止）
+  applyTheme(settings.theme || 'dark');
 
   window.api.onAuthStatus((data) => {
     authenticated = data.authenticated;

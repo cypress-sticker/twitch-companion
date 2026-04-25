@@ -26,6 +26,7 @@ const DEFAULT_SETTINGS = {
     port: 3001,
     displayDuration: 5000,
   },
+  theme: 'dark',
 };
 
 function getSettingsPath() {
@@ -95,7 +96,8 @@ function importSettings(filePath) {
 
 function resetSettings() {
   const settings = loadSettings();
-  const resetData = { ...DEFAULT_SETTINGS, auth: settings.auth };
+  // auth と theme はリセット対象外
+  const resetData = { ...DEFAULT_SETTINGS, auth: settings.auth, theme: settings.theme || 'dark' };
   saveSettings(resetData);
   return resetData;
 }

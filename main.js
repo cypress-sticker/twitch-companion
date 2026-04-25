@@ -14,7 +14,7 @@ let settings = null;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 560,
+    width: 800,
     height: 720,
     title: 'Twitch Companion',
     autoHideMenuBar: false,
@@ -22,10 +22,12 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      sandbox: false,
     },
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
+  mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   mainWindow.webContents.on('did-finish-load', async () => {
     settings = loadSettings();

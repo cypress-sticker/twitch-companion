@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     authenticated = true;
     const usernameEl = document.getElementById('username');
     if (usernameEl) usernameEl.textContent = data.username;
+    updateUI();
     nextStep();
   });
 
@@ -57,9 +58,20 @@ function showScreen(name) {
 }
 
 function goToWizardStart() {
+  syncHomeToWizard();
   currentStep = 1;
   showScreen('wizard');
   renderWizard();
+}
+
+function syncHomeToWizard() {
+  ['follow', 'subscribe', 'raid', 'bits', 'points'].forEach(key => {
+    const home = document.getElementById('home-' + key);
+    const wiz = document.getElementById('wiz-' + key);
+    if (home && wiz) {
+      wiz.classList.toggle('on', home.classList.contains('on'));
+    }
+  });
 }
 
 function goToHome() {

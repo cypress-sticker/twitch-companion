@@ -354,6 +354,9 @@ body {
   align-items: center;
   gap: 12px;
   overflow: visible;
+  position: sticky;
+  top: 0;
+  z-index: 10;
 }
 .alert-preview {
   background: rgba(24, 24, 27, 0.95);
@@ -399,15 +402,17 @@ body {
 .size-btn.active, .size-btn:hover { background: #9147ff; border-color: #9147ff; color: #fff; }
 
 /* Animation Selector */
-.anim-selector { display: flex; flex-wrap: wrap; gap: 6px; }
+.anim-selector { display: flex; flex-direction: column; gap: 6px; }
 .anim-btn {
   background: #2a2a2e;
   border: 1px solid #3a3a3e;
   color: #adadb8;
-  padding: 6px 12px;
+  padding: 8px 12px;
   border-radius: 6px;
   cursor: pointer;
   font-size: 12px;
+  width: 100%;
+  text-align: center;
 }
 .anim-btn.active, .anim-btn:hover { background: #9147ff; border-color: #9147ff; color: #fff; }
 

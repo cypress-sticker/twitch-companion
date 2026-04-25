@@ -6,3 +6,5 @@ dist/
 twitch-token.json
 settings.json
 assets/custom/
+.env
+.env.local

@@ -13,7 +13,7 @@ const DEFAULT_SETTINGS = {
   alerts: {
     follow:        { enabled: true,  message: '{user} さんがフォローしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
     subscribe:     { enabled: true,  message: '{user} さんがサブスクしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
-    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up', chatMessage: '{user} さんからレイドありがとう！({viewers}人) 直前のゲーム：{game}' },
     bits:          { enabled: false, message: '{user} さんから {amount} Bits！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
     channelPoints: { enabled: false, message: '{user} さんがポイント交換！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
   },

@@ -4,16 +4,19 @@ const WebSocket = require('ws');
 const path = require('path');
 const fs = require('fs');
 const https = require('https');
+const tmi = require('tmi.js');
 
 const CLIENT_ID = 'qcwtri71a1vzt8dndxmy1sebrz7p5u';
 
 let accessToken = null;
 let broadcasterId = null;
+let broadcasterName = null;
 let settings = null;
 let httpServer = null;
 let twitchWs = null;
 let overlayClients = [];
 let sessionId = null;
+let tmiClient = null;
 
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws';
 
@@ -224,6 +227,75 @@ async function subscribeToEvent(type, condition) {
   });
 }
 
+async function fetchChannelInfo(userId) {
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname: 'api.twitch.tv',
+      path: `/helix/channels?broadcaster_id=${userId}`,
+      method: 'GET',
+      headers: {
+        'Client-Id': CLIENT_ID,
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve(parsed.data?.[0] || null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
+
+async function ensureTmiConnected() {
+  if (tmiClient) return;
+  tmiClient = new tmi.Client({
+    options: { debug: false },
+    identity: {
+      username: broadcasterName,
+      password: `oauth:${accessToken}`,
+    },
+    channels: [broadcasterName],
+  });
+  try {
+    await tmiClient.connect();
+    log(`TMI connected as ${broadcasterName}`);
+  } catch (err) {
+    log(`TMI connect failed: ${err.message}`);
+    tmiClient = null;
+  }
+}
+
+async function sendRaidChat(template, event, channelInfo) {
+  if (!template || !template.trim()) return;
+  if (!broadcasterName) return;
+
+  const game = channelInfo?.game_name || '不明';
+  const title = channelInfo?.title || '';
+  const message = template
+    .replace('{user}', event.from_broadcaster_user_name || 'Someone')
+    .replace('{viewers}', event.viewers || '0')
+    .replace('{game}', game)
+    .replace('{title}', title);
+
+  await ensureTmiConnected();
+  if (!tmiClient) return;
+
+  try {
+    await tmiClient.say(broadcasterName, message);
+    log(`Raid chat sent: ${message}`);
+  } catch (err) {
+    log(`Raid chat failed: ${err.message}`);
+  }
+}
+
 function connectToEventSub() {
   twitchWs = new WebSocket(EVENTSUB_URL);
 
@@ -272,6 +344,13 @@ function connectToEventSub() {
         });
 
         sendEvent(eventType, { message, user: event.user_name });
+
+        // レイド時：チャンネル情報を取得してチャットに投稿
+        if (eventType === 'raid' && alertConfig.chatMessage) {
+          fetchChannelInfo(event.from_broadcaster_user_id).then(channelInfo => {
+            sendRaidChat(alertConfig.chatMessage, event, channelInfo);
+          });
+        }
       }
     }
 
@@ -295,6 +374,7 @@ function connectToEventSub() {
 function start(config) {
   accessToken = config.accessToken;
   broadcasterId = config.broadcasterId;
+  broadcasterName = config.broadcasterName;
   settings = config.settings;
 
   startHttpServer(settings.overlay.port);
@@ -309,6 +389,10 @@ function stop() {
   if (httpServer) {
     httpServer.close();
     httpServer = null;
+  }
+  if (tmiClient) {
+    tmiClient.disconnect();
+    tmiClient = null;
   }
   overlayClients = [];
   sendStatus('stopped');

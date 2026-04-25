@@ -106,6 +106,7 @@ function startAlertServer() {
     config: {
       accessToken: settings.auth.accessToken,
       broadcasterId: settings.auth.broadcasterId,
+      broadcasterName: settings.auth.broadcasterName,
       settings,
     },
   });

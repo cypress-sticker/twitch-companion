@@ -436,6 +436,13 @@ function openAlertModal(alertKey) {
   // メッセージ
   document.getElementById('modal-message').value = s.message;
 
+  // チャット投稿セクション（レイドのみ表示）
+  const raidChatSection = document.getElementById('modal-raid-chat-section');
+  if (raidChatSection) {
+    raidChatSection.style.display = alertKey === 'raid' ? 'flex' : 'none';
+    document.getElementById('modal-chat-message').value = s.chatMessage || '';
+  }
+
   updateModalPreview();
   centerModal();  // 毎回中央に配置（サイズは前回を引き継ぐ）
   document.getElementById('alert-modal').style.display = 'block';
@@ -470,6 +477,9 @@ async function saveAlertSettings() {
     image:     imageName,
     imageSize: activeSizeBtn ? activeSizeBtn.dataset.size : 'md',
     animation: activeAnimBtn ? activeAnimBtn.dataset.anim : 'slide-up',
+    ...(currentEditingAlert === 'raid' && {
+      chatMessage: document.getElementById('modal-chat-message').value,
+    }),
   };
 
   settings.alerts[currentEditingAlert] = { ...settings.alerts[currentEditingAlert], ...updated };

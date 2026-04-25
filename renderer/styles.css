@@ -348,26 +348,32 @@ body {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   z-index: 1000;
 }
 .modal-content {
+  position: absolute;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  width: 520px;
-  height: 75vh;
+  min-width: 400px;
   min-height: 440px;
-  max-height: 92vh;
   padding: 24px;
   display: flex;
   flex-direction: column;
   gap: 0;
   overflow: hidden;
-  resize: vertical;
 }
+
+/* Resize Handles */
+.rh { position: absolute; z-index: 20; user-select: none; }
+.rh-n  { top: -4px;    left: 14px;   right: 14px;  height: 8px;  cursor: n-resize;  }
+.rh-s  { bottom: -4px; left: 14px;   right: 14px;  height: 8px;  cursor: s-resize;  }
+.rh-e  { right: -4px;  top: 14px;    bottom: 14px; width: 8px;   cursor: e-resize;  }
+.rh-w  { left: -4px;   top: 14px;    bottom: 14px; width: 8px;   cursor: w-resize;  }
+.rh-ne { top: -4px;    right: -4px;  width: 16px;  height: 16px; cursor: ne-resize; }
+.rh-nw { top: -4px;    left: -4px;   width: 16px;  height: 16px; cursor: nw-resize; }
+.rh-se { bottom: -4px; right: -4px;  width: 16px;  height: 16px; cursor: se-resize; }
+.rh-sw { bottom: -4px; left: -4px;   width: 16px;  height: 16px; cursor: sw-resize; }
 .modal-settings {
   flex: 1;
   overflow-y: auto;

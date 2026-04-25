@@ -7,6 +7,66 @@ let authenticated = false;
 
 const MAX_COMMENTS = 10;
 
+// ─── Modal Resize ────────────────────────────────────────────────────────────
+
+// サイズを記憶（開くたびに引き継がれ、位置は毎回中央にリセット）
+let modalSize = { w: 520, h: null };
+
+function centerModal() {
+  const modal = document.querySelector('.modal-content');
+  if (!modal) return;
+  if (!modalSize.h) modalSize.h = Math.round(window.innerHeight * 0.75);
+  const w = Math.min(modalSize.w, window.innerWidth - 32);
+  const h = Math.min(modalSize.h, window.innerHeight * 0.92);
+  modal.style.width  = w + 'px';
+  modal.style.height = h + 'px';
+  modal.style.left   = Math.max(8, (window.innerWidth  - w) / 2) + 'px';
+  modal.style.top    = Math.max(8, (window.innerHeight - h) / 2) + 'px';
+}
+
+function initModalResize() {
+  const modal = document.querySelector('.modal-content');
+  if (!modal) return;
+  const MIN_W = 400, MIN_H = 440;
+  let resizing = false, dir = '';
+  let startX, startY, startW, startH, startLeft, startTop;
+
+  modal.querySelectorAll('.rh').forEach(handle => {
+    handle.addEventListener('mousedown', e => {
+      e.preventDefault();
+      e.stopPropagation();
+      resizing = true;
+      dir = handle.dataset.dir;
+      startX = e.clientX;
+      startY = e.clientY;
+      startW = modal.offsetWidth;
+      startH = modal.offsetHeight;
+      startLeft = parseInt(modal.style.left) || 0;
+      startTop  = parseInt(modal.style.top)  || 0;
+    });
+  });
+
+  document.addEventListener('mousemove', e => {
+    if (!resizing) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    let newW = startW, newH = startH, newLeft = startLeft, newTop = startTop;
+
+    if (dir.includes('e')) newW = Math.max(MIN_W, startW + dx);
+    if (dir.includes('w')) { newW = Math.max(MIN_W, startW - dx); newLeft = startLeft + (startW - newW); }
+    if (dir.includes('s')) newH = Math.max(MIN_H, startH + dy);
+    if (dir.includes('n')) { newH = Math.max(MIN_H, startH - dy); newTop = startTop + (startH - newH); }
+
+    modal.style.width  = newW + 'px';
+    modal.style.height = newH + 'px';
+    modal.style.left   = newLeft + 'px';
+    modal.style.top    = newTop  + 'px';
+    modalSize = { w: newW, h: newH };  // サイズのみ記憶
+  });
+
+  document.addEventListener('mouseup', () => { resizing = false; });
+}
+
 // ─── Theme ──────────────────────────────────────────────────────────────────
 
 function applyTheme(theme) {
@@ -30,6 +90,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // テーマを最初に適用（ちらつき防止）
   applyTheme(settings.theme || 'dark');
+
+  // モーダルリサイズ初期化
+  initModalResize();
 
   window.api.onAuthStatus((data) => {
     authenticated = data.authenticated;
@@ -357,7 +420,8 @@ function openAlertModal(alertKey) {
   document.getElementById('modal-message').value = s.message;
 
   updateModalPreview();
-  document.getElementById('alert-modal').style.display = 'flex';
+  centerModal();  // 毎回中央に配置（サイズは前回を引き継ぐ）
+  document.getElementById('alert-modal').style.display = 'block';
 }
 
 function closeAlertModal() {

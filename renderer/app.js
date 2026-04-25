@@ -258,6 +258,26 @@ async function importSettings() {
 async function confirmReset() {
   if (confirm('かんたん設定をやり直しますか？\n保存されていない設定がリセットされます。')) {
     settings = await window.api.resetSettings();
+
+    // トグルをデフォルト状態にリセット（follow/subscribe: ON、それ以外: OFF）
+    const alertDefaults = { follow: true, subscribe: true, raid: false, bits: false, points: false };
+    ['follow', 'subscribe', 'raid', 'bits', 'points'].forEach(key => {
+      ['wiz-', 'home-'].forEach(prefix => {
+        const el = document.getElementById(prefix + key);
+        if (el) el.classList.toggle('on', alertDefaults[key]);
+      });
+    });
+
+    // コメント入力欄をクリア
+    ['wiz-comment-list', 'home-comment-list'].forEach(listId => {
+      const list = document.getElementById(listId);
+      if (list) list.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+    });
+
+    // 投稿間隔をデフォルトに戻す
+    const intervalInput = document.getElementById('interval-input');
+    if (intervalInput) intervalInput.value = '30';
+
     currentStep = authenticated ? 2 : 1;
     showScreen('wizard');
     renderWizard();

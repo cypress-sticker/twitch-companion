@@ -1,0 +1,30 @@
+{
+  "name": "twitch-companion",
+  "version": "0.1.0",
+  "description": "Twitch配信者向けアラート＆定期コメントツール",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder"
+  },
+  "author": "cypress_sticker",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^30.0.0",
+    "electron-builder": "^24.13.0"
+  },
+  "dependencies": {
+    "tmi.js": "^1.8.5",
+    "ws": "^8.17.0"
+  },
+  "build": {
+    "appId": "com.hinoki.twitch-companion",
+    "productName": "Twitch Companion",
+    "directories": {
+      "output": "release"
+    },
+    "win": {
+      "target": "nsis"
+    }
+  }
+}

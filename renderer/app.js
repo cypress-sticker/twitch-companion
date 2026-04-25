@@ -14,14 +14,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   window.api.onAuthStatus((data) => {
     authenticated = data.authenticated;
     if (authenticated) {
-      document.getElementById('username').textContent = data.username;
+      const usernameEl = document.getElementById('username');
+      if (usernameEl) usernameEl.textContent = data.username;
     }
     updateUI();
   });
 
   window.api.onLoginSuccess((data) => {
     authenticated = true;
-    document.getElementById('username').textContent = data.username;
+    const usernameEl = document.getElementById('username');
+    if (usernameEl) usernameEl.textContent = data.username;
     nextStep();
   });
 
@@ -143,6 +145,32 @@ function syncAlertsToHome() {
       home.classList.toggle('on', wiz.classList.contains('on'));
     }
   });
+
+  // Sync periodic comment interval from wizard to home
+  const wizInterval = document.querySelector('#step-4 input[type="number"]');
+  const homeInterval = document.getElementById('interval-input');
+  if (wizInterval && homeInterval) {
+    homeInterval.value = wizInterval.value;
+  }
+
+  // Sync periodic comment messages from wizard to home
+  const wizList = document.getElementById('wiz-comment-list');
+  const homeList = document.getElementById('home-comment-list');
+  if (wizList && homeList) {
+    const wizInputs = wizList.querySelectorAll('input[type="text"]');
+    if (wizInputs.length > 0) {
+      homeList.innerHTML = '';
+      wizInputs.forEach(input => {
+        const row = document.createElement('div');
+        row.className = 'comment-row';
+        row.innerHTML = `
+          <input type="text" class="input" placeholder="メッセージを入力..." value="${input.value.replace(/"/g, '&quot;')}">
+          <button class="delete-btn" onclick="removeComment(this)">×</button>
+        `;
+        homeList.appendChild(row);
+      });
+    }
+  }
 }
 
 function toggleAlert(el) {
@@ -167,6 +195,7 @@ function removeComment(btn) {
 }
 
 async function saveSettings() {
+  if (!settings) return;
   const newSettings = {
     alerts: {
       follow:        { enabled: document.getElementById('home-follow')?.classList.contains('on') ?? false, message: settings.alerts.follow.message, sound: 'default', image: '' },
@@ -188,8 +217,12 @@ async function saveSettings() {
 
 async function copyOverlayUrl() {
   const url = await window.api.getOverlayUrl();
-  navigator.clipboard.writeText(url);
-  alert('URLをコピーしました');
+  try {
+    await navigator.clipboard.writeText(url);
+    alert('URLをコピーしました');
+  } catch {
+    alert('コピーに失敗しました。手動でURLをコピーしてください。');
+  }
 }
 
 async function exportSettings() {
@@ -210,9 +243,9 @@ async function importSettings() {
   }
 }
 
-function confirmReset() {
+async function confirmReset() {
   if (confirm('かんたん設定をやり直しますか？\n保存されていない設定がリセットされます。')) {
-    window.api.resetSettings();
+    settings = await window.api.resetSettings();
     currentStep = 1;
     showScreen('wizard');
     renderWizard();

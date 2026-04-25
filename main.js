@@ -1,6 +1,7 @@
 // main.js
 const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
+const fs = require('fs');
 const { fork } = require('child_process');
 
 const IPC = require('./src/utils/ipc-channels');
@@ -27,7 +28,6 @@ function createWindow() {
   });
 
   mainWindow.loadFile(path.join(__dirname, 'renderer', 'index.html'));
-  mainWindow.webContents.openDevTools({ mode: 'detach' });
 
   mainWindow.webContents.on('did-finish-load', async () => {
     settings = loadSettings();
@@ -238,6 +238,42 @@ ipcMain.on(IPC.BOT_STOP, () => stopBotServer());
 
 ipcMain.handle(IPC.OVERLAY_URL, () => {
   return `http://localhost:${settings.overlay.port}/overlay`;
+});
+
+ipcMain.handle(IPC.ALERT_SELECT_IMAGE, async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '画像を選択',
+    filters: [{ name: '画像ファイル', extensions: ['png', 'jpg', 'jpeg', 'gif'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+
+  const srcPath = result.filePaths[0];
+  const destDir = path.join(__dirname, 'assets', 'custom');
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const filename = path.basename(srcPath);
+  const destPath = path.join(destDir, filename);
+  fs.copyFileSync(srcPath, destPath);
+  return filename;
+});
+
+ipcMain.handle(IPC.ALERT_SELECT_SOUND, async () => {
+  const result = await dialog.showOpenDialog(mainWindow, {
+    title: '効果音を選択',
+    filters: [{ name: '音声ファイル', extensions: ['mp3', 'wav', 'ogg'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || result.filePaths.length === 0) return null;
+
+  const srcPath = result.filePaths[0];
+  const destDir = path.join(__dirname, 'assets', 'custom');
+  if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
+
+  const filename = path.basename(srcPath);
+  const destPath = path.join(destDir, filename);
+  fs.copyFileSync(srcPath, destPath);
+  return filename;
 });
 
 // App lifecycle

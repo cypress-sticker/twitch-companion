@@ -57,6 +57,23 @@ function initModalResize() {
     if (dir.includes('s')) newH = Math.max(MIN_H, startH + dy);
     if (dir.includes('n')) { newH = Math.max(MIN_H, startH - dy); newTop = startTop + (startH - newH); }
 
+    // ビューポート外にはみ出さないようにクランプ
+    const margin = 8;
+    if (dir.includes('e') && newLeft + newW > window.innerWidth - margin) {
+      newW = Math.max(MIN_W, window.innerWidth - margin - newLeft);
+    }
+    if (dir.includes('s') && newTop + newH > window.innerHeight - margin) {
+      newH = Math.max(MIN_H, window.innerHeight - margin - newTop);
+    }
+    if (dir.includes('w') && newLeft < margin) {
+      newLeft = margin;
+      newW = Math.max(MIN_W, startLeft + startW - newLeft);
+    }
+    if (dir.includes('n') && newTop < margin) {
+      newTop = margin;
+      newH = Math.max(MIN_H, startTop + startH - newTop);
+    }
+
     modal.style.width  = newW + 'px';
     modal.style.height = newH + 'px';
     modal.style.left   = newLeft + 'px';

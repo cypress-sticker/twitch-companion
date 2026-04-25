@@ -347,16 +347,17 @@
       align-items: center;
       gap: 12px;
       padding: 16px;
-      background: #2a2a2e;
+      background: var(--bg-input);
       border-radius: 8px;
       cursor: pointer;
       border: 2px solid transparent;
+      color: var(--text-primary);
     }
-    .feature-item.checked { border-color: #9147ff; }
+    .feature-item.checked { border-color: var(--accent); }
     .feature-item .checkbox {
       width: 24px;
       height: 24px;
-      background: #3a3a3e;
+      background: var(--bg-hover);
       border-radius: 6px;
       display: flex;
       align-items: center;
@@ -365,7 +366,7 @@
       color: transparent;
     }
     .feature-item.checked .checkbox {
-      background: #9147ff;
+      background: var(--accent);
       color: #fff;
     }
   </style>

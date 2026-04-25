@@ -59,7 +59,7 @@ function showScreen(name) {
 
 function goToWizardStart() {
   syncHomeToWizard();
-  currentStep = 1;
+  currentStep = authenticated ? 2 : 1;
   showScreen('wizard');
   renderWizard();
 }
@@ -258,7 +258,7 @@ async function importSettings() {
 async function confirmReset() {
   if (confirm('かんたん設定をやり直しますか？\n保存されていない設定がリセットされます。')) {
     settings = await window.api.resetSettings();
-    currentStep = 1;
+    currentStep = authenticated ? 2 : 1;
     showScreen('wizard');
     renderWizard();
   }

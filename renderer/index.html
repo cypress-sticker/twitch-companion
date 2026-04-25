@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Twitch Companion</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- Navigation -->
+  <div class="nav">
+    <button class="nav-btn active" data-screen="wizard" onclick="goToWizardStart()">かんたん設定</button>
+    <button class="nav-btn" data-screen="home" onclick="goToHome()">ホーム</button>
+  </div>
+
+  <!-- Auth Banner (hidden when authenticated) -->
+  <div id="auth-banner" class="banner" style="display:none; margin-top: 49px;">
+    Twitchにログインしてください。
+    <a onclick="goToWizardStart()">かんたん設定を開く</a>
+  </div>
+
+  <!-- Wizard Screen -->
+  <div id="screen-wizard" class="screen active">
+    <div class="main-content">
+      <div class="card">
+        <div class="stepper" id="stepper"></div>
+
+        <!-- STEP 1: 認証 -->
+        <div class="wizard-step" id="step-1">
+          <div class="section-title">Twitchでログイン</div>
+          <div class="section-sub">配信者アカウントでログインしてください。</div>
+          <button class="btn btn-primary" onclick="startLogin()" style="width:100%;">
+            Twitchでログイン
+          </button>
+          <p style="margin-top:16px; font-size:12px; color:#6a6a6e; text-align:center;">
+            ブラウザが開きます。認証後このウィンドウに戻ります。
+          </p>
+        </div>
+
+        <!-- STEP 2: 機能選択 -->
+        <div class="wizard-step" id="step-2" style="display:none;">
+          <div class="section-title">使用する機能を選択</div>
+          <div class="section-sub">あとから変更できます。</div>
+          <div style="display:flex; flex-direction:column; gap:12px;">
+            <div id="feature-alert" class="feature-item checked" onclick="toggleFeature(this)">
+              <span class="checkbox">✓</span>
+              <span>アラート通知</span>
+            </div>
+            <div id="feature-comment" class="feature-item checked" onclick="toggleFeature(this)">
+              <span class="checkbox">✓</span>
+              <span>定期コメント</span>
+            </div>
+          </div>
+          <div style="margin-top:24px; display:flex; gap:12px;">
+            <button class="btn btn-secondary" onclick="prevStep()">← 戻る</button>
+            <button class="btn btn-primary" onclick="nextStep()" style="flex:1;">次へ →</button>
+          </div>
+        </div>
+
+        <!-- STEP 3: アラート設定 -->
+        <div class="wizard-step" id="step-3" style="display:none;">
+          <div class="section-title">アラートの設定</div>
+          <div class="section-sub">通知したいイベントをオンにしてください。</div>
+          <div class="alert-list">
+            <div class="alert-row">
+              <div id="wiz-follow" class="toggle on" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">フォロー通知</div>
+            </div>
+            <div class="alert-row">
+              <div id="wiz-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">サブスク通知</div>
+            </div>
+            <div class="alert-row">
+              <div id="wiz-raid" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">レイド通知</div>
+            </div>
+            <div class="alert-row">
+              <div id="wiz-bits" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">ビッツ通知</div>
+            </div>
+            <div class="alert-row">
+              <div id="wiz-points" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">チャンネルポイント</div>
+            </div>
+          </div>
+          <div style="margin-top:24px; display:flex; gap:12px;">
+            <button class="btn btn-secondary" onclick="prevStep()">← 戻る</button>
+            <button class="btn btn-primary" onclick="nextStep()" style="flex:1;">次へ →</button>
+          </div>
+          <button class="btn-ghost" onclick="nextStep()" style="width:100%; margin-top:8px;">このステップをスキップ</button>
+        </div>
+
+        <!-- STEP 4: 定期コメント設定 -->
+        <div class="wizard-step" id="step-4" style="display:none;">
+          <div class="section-title">定期コメントの設定</div>
+          <div class="section-sub">配信中に自動で投稿するメッセージを設定できます。</div>
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <span>投稿間隔：</span>
+            <input type="number" class="input" value="30" min="1" max="120" style="width:80px;">
+            <span>分</span>
+          </div>
+          <div id="wiz-comment-list">
+            <div class="comment-row">
+              <input type="text" class="input" placeholder="メッセージを入力...">
+              <button class="delete-btn" onclick="removeComment(this)">×</button>
+            </div>
+          </div>
+          <button class="add-btn" onclick="addComment('wiz-comment-list')">＋ コメントを追加</button>
+          <div style="margin-top:24px; display:flex; gap:12px;">
+            <button class="btn btn-secondary" onclick="prevStep()">← 戻る</button>
+            <button class="btn btn-primary" onclick="nextStep()" style="flex:1;">次へ →</button>
+          </div>
+          <button class="btn-ghost" onclick="nextStep()" style="width:100%; margin-top:8px;">このステップをスキップ</button>
+        </div>
+
+        <!-- STEP 5: 完了 -->
+        <div class="wizard-step" id="step-5" style="display:none;">
+          <div style="text-align:center;">
+            <div style="font-size:48px; color:#00c9a7;">✓</div>
+            <div class="section-title" style="margin-top:16px;">設定が完了しました！</div>
+            <div class="section-sub">OBSにブラウザソースを追加して、アラートを表示しましょう。</div>
+          </div>
+          <div class="url-box">
+            <span class="url-text" id="overlay-url">http://localhost:3001/overlay</span>
+            <button class="copy-btn" onclick="copyOverlayUrl()">URLをコピー</button>
+          </div>
+          <p style="margin-top:12px; font-size:12px; color:#6a6a6e; text-align:center;">
+            OBS → ソース追加 → ブラウザ → 上のURLを貼り付け
+          </p>
+          <div style="margin-top:24px; display:flex; gap:12px;">
+            <button class="btn btn-secondary" onclick="prevStep()">← 戻る</button>
+            <button class="btn btn-primary" onclick="goToHome()" style="flex:1;">ホームへ</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Home Screen -->
+  <div id="screen-home" class="screen">
+    <div class="main-content">
+      <div id="home-content">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+          <h1 style="font-size:24px;">ホーム</h1>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary" onclick="exportSettings()">設定をエクスポート</button>
+            <button class="btn btn-secondary" onclick="importSettings()">設定をインポート</button>
+          </div>
+        </div>
+
+        <div class="panel-grid">
+          <!-- Alert Section -->
+          <div class="panel-section">
+            <div class="panel-section-title">
+              <span class="status-dot"></span> アラート通知
+            </div>
+            <div class="alert-list">
+              <div class="alert-row">
+                <div id="home-follow" class="toggle on" onclick="toggleAlert(this)"></div>
+                <div class="alert-name">フォロー通知</div>
+              </div>
+              <div class="alert-row">
+                <div id="home-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
+                <div class="alert-name">サブスク通知</div>
+              </div>
+              <div class="alert-row">
+                <div id="home-raid" class="toggle" onclick="toggleAlert(this)"></div>
+                <div class="alert-name">レイド通知</div>
+              </div>
+              <div class="alert-row">
+                <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
+                <div class="alert-name">ビッツ通知</div>
+              </div>
+              <div class="alert-row">
+                <div id="home-points" class="toggle" onclick="toggleAlert(this)"></div>
+                <div class="alert-name">チャンネルポイント</div>
+              </div>
+            </div>
+            <div class="url-box">
+              <span class="url-text">localhost:3001/overlay</span>
+              <button class="copy-btn" onclick="copyOverlayUrl()">コピー</button>
+            </div>
+          </div>
+
+          <!-- Periodic Comment Section -->
+          <div class="panel-section">
+            <div class="panel-section-title">
+              <span class="status-dot"></span> 定期コメント
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+              <span style="font-size:13px;">投稿間隔：</span>
+              <input type="number" id="interval-input" class="input" value="30" min="1" max="120" style="width:60px; padding:8px;">
+              <span style="font-size:13px;">分</span>
+            </div>
+            <div id="home-comment-list">
+              <div class="comment-row">
+                <input type="text" class="input" placeholder="メッセージを入力...">
+                <button class="delete-btn" onclick="removeComment(this)">×</button>
+              </div>
+            </div>
+            <button class="add-btn" onclick="addComment('home-comment-list')">＋ コメントを追加</button>
+          </div>
+        </div>
+
+        <div style="margin-top:24px; display:flex; justify-content:flex-end;">
+          <button class="btn btn-secondary" style="color:#ff4444;" onclick="confirmReset()">
+            かんたん設定をやり直す
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .wizard-step { display: none; }
+    .feature-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      background: #2a2a2e;
+      border-radius: 8px;
+      cursor: pointer;
+      border: 2px solid transparent;
+    }
+    .feature-item.checked { border-color: #9147ff; }
+    .feature-item .checkbox {
+      width: 24px;
+      height: 24px;
+      background: #3a3a3e;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: transparent;
+    }
+    .feature-item.checked .checkbox {
+      background: #9147ff;
+      color: #fff;
+    }
+  </style>
+  <script src="app.js"></script>
+</body>
+</html>

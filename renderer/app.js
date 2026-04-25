@@ -283,3 +283,199 @@ async function confirmReset() {
     renderWizard();
   }
 }
+
+// ─── Alert Settings Modal ───────────────────────────────
+
+const ALERT_LABELS = {
+  follow:        'フォロー通知',
+  subscribe:     'サブスク通知',
+  raid:          'レイド通知',
+  bits:          'ビッツ通知',
+  channelPoints: 'チャンネルポイント通知',
+};
+
+const ALERT_KEY_TO_HOME_ID = {
+  follow: 'follow', subscribe: 'subscribe', raid: 'raid', bits: 'bits', channelPoints: 'points',
+};
+
+let currentEditingAlert = null;
+
+function openAlertModal(alertKey) {
+  if (!settings) return;
+  currentEditingAlert = alertKey;
+  const s = settings.alerts[alertKey];
+
+  document.getElementById('modal-alert-title').textContent = ALERT_LABELS[alertKey] + 'の設定';
+
+  // ON/OFF
+  document.getElementById('modal-enabled-toggle').classList.toggle('on', s.enabled);
+
+  // 画像
+  const imageName = s.image || '';
+  document.getElementById('modal-image-name').textContent = imageName || '選択なし';
+  document.getElementById('modal-image-clear').style.display = imageName ? 'block' : 'none';
+  setModalImageSize(s.imageSize || 'md');
+
+  // 効果音
+  const soundType = s.soundType || 'default';
+  const radioEl = document.querySelector(`input[name="sound-type"][value="${soundType}"]`);
+  if (radioEl) radioEl.checked = true;
+  document.getElementById('modal-sound-name').textContent = s.soundFile || '選択なし';
+  document.getElementById('custom-sound-row').style.display = soundType === 'custom' ? 'flex' : 'none';
+  document.getElementById('volume-row').style.display = soundType === 'none' ? 'none' : 'flex';
+  const vol = s.volume ?? 70;
+  document.getElementById('volume-slider').value = vol;
+  document.getElementById('volume-display').textContent = vol + '%';
+
+  // アニメーション
+  setModalAnimation(s.animation || 'slide-up');
+
+  // メッセージ
+  document.getElementById('modal-message').value = s.message;
+
+  updateModalPreview();
+  document.getElementById('alert-modal').style.display = 'flex';
+}
+
+function closeAlertModal() {
+  document.getElementById('alert-modal').style.display = 'none';
+  currentEditingAlert = null;
+}
+
+function onModalOverlayClick(event) {
+  if (event.target === document.getElementById('alert-modal')) closeAlertModal();
+}
+
+async function saveAlertSettings() {
+  if (!currentEditingAlert || !settings) return;
+
+  const soundType = document.querySelector('input[name="sound-type"]:checked')?.value || 'default';
+  const activeSizeBtn  = document.querySelector('.size-btn.active');
+  const activeAnimBtn  = document.querySelector('.anim-btn.active');
+  const imageNameEl    = document.getElementById('modal-image-name');
+  const soundNameEl    = document.getElementById('modal-sound-name');
+  const imageName      = imageNameEl.textContent === '選択なし' ? '' : imageNameEl.textContent;
+  const soundFile      = soundType === 'custom' ? (soundNameEl.textContent === '選択なし' ? '' : soundNameEl.textContent) : '';
+
+  const updated = {
+    enabled:   document.getElementById('modal-enabled-toggle').classList.contains('on'),
+    message:   document.getElementById('modal-message').value,
+    soundType,
+    soundFile,
+    volume:    parseInt(document.getElementById('volume-slider').value),
+    image:     imageName,
+    imageSize: activeSizeBtn ? activeSizeBtn.dataset.size : 'md',
+    animation: activeAnimBtn ? activeAnimBtn.dataset.anim : 'slide-up',
+  };
+
+  settings.alerts[currentEditingAlert] = { ...settings.alerts[currentEditingAlert], ...updated };
+
+  // ホームのトグルと同期
+  const homeId = ALERT_KEY_TO_HOME_ID[currentEditingAlert];
+  const homeToggle = document.getElementById('home-' + homeId);
+  if (homeToggle) homeToggle.classList.toggle('on', updated.enabled);
+
+  await window.api.saveSettings(settings);
+  closeAlertModal();
+}
+
+function updateModalPreview() {
+  const msgEl = document.getElementById('modal-message');
+  const message = (msgEl ? msgEl.value : '') || '';
+  const previewText = message
+    .replace('{user}', 'cypress_sticker')
+    .replace('{viewers}', '10')
+    .replace('{amount}', '100');
+  document.getElementById('preview-text').textContent = previewText || '（メッセージなし）';
+
+  const imageName = document.getElementById('modal-image-name')?.textContent;
+  const previewImg = document.getElementById('preview-img');
+  const port = settings?.overlay?.port || 3001;
+  if (imageName && imageName !== '選択なし') {
+    previewImg.src = `http://localhost:${port}/custom/${imageName}`;
+    previewImg.style.display = 'block';
+  } else {
+    previewImg.style.display = 'none';
+  }
+
+  // 画像サイズクラスを更新
+  const activeSizeBtn = document.querySelector('.size-btn.active');
+  if (activeSizeBtn && previewImg) {
+    previewImg.className = 'img-' + activeSizeBtn.dataset.size;
+  }
+}
+
+function previewAlertAnimation() {
+  const preview = document.getElementById('modal-preview');
+  const activeAnimBtn = document.querySelector('.anim-btn.active');
+  const animName = activeAnimBtn ? activeAnimBtn.dataset.anim : 'slide-up';
+
+  preview.classList.remove('anim-slide-up', 'anim-slide-down', 'anim-fade-in', 'anim-zoom-in', 'anim-bounce');
+  void preview.offsetWidth; // force reflow
+  preview.classList.add('anim-' + animName);
+  setTimeout(() => preview.classList.remove('anim-' + animName), 800);
+}
+
+function testPlaySound() {
+  const soundType = document.querySelector('input[name="sound-type"]:checked')?.value;
+  if (soundType === 'none') return;
+
+  const port = settings?.overlay?.port || 3001;
+  const volume = parseInt(document.getElementById('volume-slider').value) / 100;
+  let src;
+
+  if (soundType === 'custom') {
+    const soundName = document.getElementById('modal-sound-name').textContent;
+    if (!soundName || soundName === '選択なし') return;
+    src = `http://localhost:${port}/custom/${soundName}`;
+  } else {
+    src = `http://localhost:${port}/sounds/chime.mp3`;
+  }
+
+  const audio = new Audio(src);
+  audio.volume = Math.max(0, Math.min(1, volume));
+  audio.play().catch(() => {});
+}
+
+async function selectModalImage() {
+  const filename = await window.api.selectAlertImage();
+  if (!filename) return;
+  document.getElementById('modal-image-name').textContent = filename;
+  document.getElementById('modal-image-clear').style.display = 'block';
+  updateModalPreview();
+}
+
+function clearModalImage() {
+  document.getElementById('modal-image-name').textContent = '選択なし';
+  document.getElementById('modal-image-clear').style.display = 'none';
+  updateModalPreview();
+}
+
+async function selectModalSound() {
+  const filename = await window.api.selectAlertSound();
+  if (!filename) return;
+  document.getElementById('modal-sound-name').textContent = filename;
+}
+
+function onSoundTypeChange() {
+  const soundType = document.querySelector('input[name="sound-type"]:checked')?.value;
+  document.getElementById('custom-sound-row').style.display = soundType === 'custom' ? 'flex' : 'none';
+  document.getElementById('volume-row').style.display     = soundType === 'none' ? 'none' : 'flex';
+}
+
+function onVolumeChange(value) {
+  document.getElementById('volume-display').textContent = value + '%';
+}
+
+function setModalImageSize(size) {
+  document.querySelectorAll('.size-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.size === size);
+  });
+  updateModalPreview();
+}
+
+function setModalAnimation(anim) {
+  document.querySelectorAll('.anim-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.anim === anim);
+  });
+}

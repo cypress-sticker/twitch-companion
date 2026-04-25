@@ -170,22 +170,27 @@
               <div class="alert-row">
                 <div id="home-follow" class="toggle on" onclick="toggleAlert(this)"></div>
                 <div class="alert-name">フォロー通知</div>
+                <button class="alert-settings-btn" onclick="openAlertModal('follow')">設定 ⚙</button>
               </div>
               <div class="alert-row">
                 <div id="home-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
                 <div class="alert-name">サブスク通知</div>
+                <button class="alert-settings-btn" onclick="openAlertModal('subscribe')">設定 ⚙</button>
               </div>
               <div class="alert-row">
                 <div id="home-raid" class="toggle" onclick="toggleAlert(this)"></div>
                 <div class="alert-name">レイド通知</div>
+                <button class="alert-settings-btn" onclick="openAlertModal('raid')">設定 ⚙</button>
               </div>
               <div class="alert-row">
                 <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
                 <div class="alert-name">ビッツ通知</div>
+                <button class="alert-settings-btn" onclick="openAlertModal('bits')">設定 ⚙</button>
               </div>
               <div class="alert-row">
                 <div id="home-points" class="toggle" onclick="toggleAlert(this)"></div>
                 <div class="alert-name">チャンネルポイント</div>
+                <button class="alert-settings-btn" onclick="openAlertModal('channelPoints')">設定 ⚙</button>
               </div>
             </div>
             <div class="url-box">
@@ -227,6 +232,93 @@
             かんたん設定をやり直す
           </button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Alert Settings Modal ─── -->
+  <div id="alert-modal" class="modal-overlay" style="display:none;" onclick="onModalOverlayClick(event)">
+    <div class="modal-content">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <span id="modal-alert-title">フォロー通知の設定</span>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="modal-enabled-toggle" class="toggle on" onclick="toggleAlert(this); updateModalPreview();"></div>
+          <button class="modal-close" onclick="closeAlertModal()">×</button>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="modal-preview-area">
+        <div id="modal-preview" class="alert-preview">
+          <img id="preview-img" class="img-md" style="display:none;" alt="">
+          <span id="preview-text">🎉 cypress_sticker さんがフォローしました！</span>
+        </div>
+        <button class="btn btn-secondary" onclick="previewAlertAnimation()" style="font-size:12px; padding:6px 16px;">▶ アニメーション確認</button>
+      </div>
+
+      <!-- 画像 -->
+      <div class="modal-section">
+        <div class="modal-section-label">画像</div>
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="selectModalImage()" style="font-size:12px; padding:8px 14px;">ファイルを選択</button>
+          <span id="modal-image-name" style="font-size:12px; color:#adadb8; flex:1;">選択なし</span>
+          <button id="modal-image-clear" class="alert-settings-btn" onclick="clearModalImage()" style="display:none;">✕ 削除</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+          <span style="font-size:12px; color:#adadb8;">サイズ：</span>
+          <div class="size-selector">
+            <button class="size-btn" data-size="sm" onclick="setModalImageSize('sm')">S</button>
+            <button class="size-btn active" data-size="md" onclick="setModalImageSize('md')">M</button>
+            <button class="size-btn" data-size="lg" onclick="setModalImageSize('lg')">L</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 効果音 -->
+      <div class="modal-section">
+        <div class="modal-section-label">効果音</div>
+        <div class="radio-row">
+          <label class="radio-label"><input type="radio" name="sound-type" value="default" onchange="onSoundTypeChange()"> デフォルト</label>
+          <label class="radio-label"><input type="radio" name="sound-type" value="custom" onchange="onSoundTypeChange()"> カスタム</label>
+          <label class="radio-label"><input type="radio" name="sound-type" value="none" onchange="onSoundTypeChange()"> なし</label>
+        </div>
+        <div id="custom-sound-row" style="display:none; align-items:center; gap:8px; margin-top:4px;">
+          <button class="btn btn-secondary" onclick="selectModalSound()" style="font-size:12px; padding:8px 14px;">ファイルを選択</button>
+          <span id="modal-sound-name" style="font-size:12px; color:#adadb8; flex:1;">選択なし</span>
+        </div>
+        <div id="volume-row" class="volume-row" style="margin-top:4px;">
+          <span style="font-size:16px;">🔈</span>
+          <input type="range" id="volume-slider" min="0" max="100" value="70" oninput="onVolumeChange(this.value)">
+          <span id="volume-display" class="volume-value">70%</span>
+          <button class="btn btn-secondary" onclick="testPlaySound()" style="font-size:12px; padding:6px 14px;">▶ テスト再生</button>
+        </div>
+      </div>
+
+      <!-- アニメーション -->
+      <div class="modal-section">
+        <div class="modal-section-label">アニメーション</div>
+        <div class="anim-selector">
+          <button class="anim-btn active" data-anim="slide-up"   onclick="setModalAnimation('slide-up')">スライドアップ</button>
+          <button class="anim-btn"        data-anim="slide-down" onclick="setModalAnimation('slide-down')">スライドダウン</button>
+          <button class="anim-btn"        data-anim="fade-in"    onclick="setModalAnimation('fade-in')">フェードイン</button>
+          <button class="anim-btn"        data-anim="zoom-in"    onclick="setModalAnimation('zoom-in')">ズームイン</button>
+          <button class="anim-btn"        data-anim="bounce"     onclick="setModalAnimation('bounce')">バウンス</button>
+        </div>
+      </div>
+
+      <!-- メッセージ -->
+      <div class="modal-section">
+        <div class="modal-section-label">メッセージ</div>
+        <input type="text" id="modal-message" class="input" oninput="updateModalPreview()">
+        <div class="var-hint">{user} = ユーザー名　{viewers} = 人数（レイド用）　{amount} = ビッツ数</div>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAlertModal()">キャンセル</button>
+        <button class="btn btn-primary" onclick="saveAlertSettings()">保存</button>
       </div>
     </div>
   </div>

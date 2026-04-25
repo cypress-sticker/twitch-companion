@@ -289,3 +289,149 @@ body {
   opacity: 0.5;
   pointer-events: none;
 }
+
+/* ───── Modal ───── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #18181b;
+  border: 1px solid #2a2a2e;
+  border-radius: 16px;
+  width: 520px;
+  max-height: 85vh;
+  overflow-y: auto;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 18px;
+  font-weight: 600;
+}
+.modal-close {
+  background: transparent;
+  border: none;
+  color: #adadb8;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px 8px;
+  line-height: 1;
+}
+.modal-close:hover { color: #fff; }
+.modal-section { display: flex; flex-direction: column; gap: 8px; }
+.modal-section-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #adadb8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 4px;
+}
+
+/* Preview */
+.modal-preview-area {
+  background: #0e0e10;
+  border-radius: 12px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 80px;
+}
+.alert-preview {
+  background: rgba(24, 24, 27, 0.95);
+  border: 2px solid #9147ff;
+  border-radius: 12px;
+  padding: 12px 20px;
+  color: #fff;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.alert-preview img.img-sm { width: 32px; height: 32px; border-radius: 6px; }
+.alert-preview img.img-md { width: 48px; height: 48px; border-radius: 8px; }
+.alert-preview img.img-lg { width: 72px; height: 72px; border-radius: 10px; }
+
+/* アニメーションプレビュー用 */
+@keyframes previewSlideUp   { from { transform: translateY(30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes previewSlideDown { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes previewFadeIn    { from { opacity: 0; } to { opacity: 1; } }
+@keyframes previewZoomIn    { from { transform: scale(0.6); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes previewBounce    { 0% { transform: translateY(30px); opacity: 0; } 60% { transform: translateY(-8px); opacity: 1; } 80% { transform: translateY(4px); } 100% { transform: translateY(0); } }
+
+.alert-preview.anim-slide-up   { animation: previewSlideUp   0.4s ease-out forwards; }
+.alert-preview.anim-slide-down { animation: previewSlideDown 0.4s ease-out forwards; }
+.alert-preview.anim-fade-in    { animation: previewFadeIn    0.5s ease-out forwards; }
+.alert-preview.anim-zoom-in    { animation: previewZoomIn    0.4s ease-out forwards; }
+.alert-preview.anim-bounce     { animation: previewBounce    0.6s ease-out forwards; }
+
+/* Size Selector */
+.size-selector { display: flex; gap: 4px; }
+.size-btn {
+  background: #2a2a2e;
+  border: 1px solid #3a3a3e;
+  color: #adadb8;
+  width: 36px;
+  height: 32px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+}
+.size-btn.active, .size-btn:hover { background: #9147ff; border-color: #9147ff; color: #fff; }
+
+/* Animation Selector */
+.anim-selector { display: flex; flex-wrap: wrap; gap: 6px; }
+.anim-btn {
+  background: #2a2a2e;
+  border: 1px solid #3a3a3e;
+  color: #adadb8;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.anim-btn.active, .anim-btn:hover { background: #9147ff; border-color: #9147ff; color: #fff; }
+
+/* Radio */
+.radio-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+.radio-label { display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer; }
+.radio-label input { accent-color: #9147ff; cursor: pointer; }
+
+/* Volume Row */
+.volume-row { display: flex; align-items: center; gap: 10px; }
+.volume-row input[type="range"] { flex: 1; accent-color: #9147ff; }
+.volume-value { font-size: 12px; min-width: 36px; color: #adadb8; }
+
+/* Alert row 設定ボタン */
+.alert-settings-btn {
+  background: transparent;
+  border: 1px solid #3a3a3e;
+  color: #adadb8;
+  padding: 4px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 12px;
+}
+.alert-settings-btn:hover { border-color: #9147ff; color: #9147ff; }
+
+/* Variable hint */
+.var-hint { font-size: 11px; color: #6a6a6e; margin-top: 2px; }

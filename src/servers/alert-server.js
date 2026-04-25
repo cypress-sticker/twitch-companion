@@ -63,19 +63,26 @@ function getOverlayHtml() {
       padding: 16px 24px;
       color: #fff;
       font-size: 18px;
-      animation: slideUp 0.3s ease-out, fadeOut 0.5s ease-in 4.5s forwards;
       display: flex;
       align-items: center;
       gap: 12px;
     }
-    .alert img { width: 48px; height: 48px; border-radius: 8px; }
-    @keyframes slideUp {
-      from { transform: translateY(100px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    @keyframes fadeOut {
-      to { opacity: 0; transform: translateY(-20px); }
-    }
+    .alert img.img-sm { width: 32px;  height: 32px;  border-radius: 6px; }
+    .alert img.img-md { width: 48px;  height: 48px;  border-radius: 8px; }
+    .alert img.img-lg { width: 72px;  height: 72px;  border-radius: 10px; }
+
+    .alert.slide-up   { animation: slideUpAnim   0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
+    .alert.slide-down { animation: slideDownAnim 0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
+    .alert.fade-in    { animation: fadeInAnim    0.5s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
+    .alert.zoom-in    { animation: zoomInAnim    0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
+    .alert.bounce     { animation: bounceAnim    0.7s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
+
+    @keyframes slideUpAnim   { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes slideDownAnim { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    @keyframes fadeInAnim    { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes zoomInAnim    { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes bounceAnim    { 0% { transform: translateY(100px); opacity: 0; } 60% { transform: translateY(-15px); opacity: 1; } 80% { transform: translateY(8px); } 100% { transform: translateY(0); } }
+    @keyframes fadeOut       { to { opacity: 0; transform: translateY(-20px); } }
   </style>
 </head>
 <body>
@@ -91,21 +98,33 @@ function getOverlayHtml() {
     };
     function showAlert(data) {
       const div = document.createElement('div');
-      div.className = 'alert';
+      div.className = 'alert ' + (data.animation || 'slide-up');
+
       if (data.image) {
         const img = document.createElement('img');
-        img.src = data.image;
+        img.src = '/custom/' + data.image;
+        img.className = 'img-' + (data.imageSize || 'md');
         div.appendChild(img);
       }
+
       const text = document.createElement('span');
       text.textContent = data.message;
       div.appendChild(text);
       container.appendChild(div);
-      if (data.sound !== 'none') {
-        chime.currentTime = 0;
-        chime.play().catch(() => {});
+
+      if (data.soundType !== 'none') {
+        let audio;
+        if (data.soundType === 'custom' && data.soundFile) {
+          audio = new Audio('/custom/' + data.soundFile);
+        } else {
+          audio = chime;
+        }
+        audio.volume = Math.max(0, Math.min(1, (data.volume ?? 70) / 100));
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
       }
-      setTimeout(() => div.remove(), 5000);
+
+      setTimeout(() => div.remove(), 5500);
     }
   </script>
 </body>
@@ -244,8 +263,12 @@ function connectToEventSub() {
         broadcastToOverlay({
           type: 'alert',
           message,
-          sound: alertConfig.sound,
-          image: alertConfig.image ? `/custom/${path.basename(alertConfig.image)}` : null,
+          soundType: alertConfig.soundType || 'default',
+          soundFile: alertConfig.soundFile || '',
+          volume: alertConfig.volume ?? 70,
+          image: alertConfig.image ? path.basename(alertConfig.image) : null,
+          imageSize: alertConfig.imageSize || 'md',
+          animation: alertConfig.animation || 'slide-up',
         });
 
         sendEvent(eventType, { message, user: event.user_name });

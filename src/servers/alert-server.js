@@ -72,8 +72,6 @@ function getOverlayHtml() {
       display: flex;
       flex-direction: column;
       gap: 10px;
-      align-items: center;
-      ${posStyle}
     }
     .alert {
       background: rgba(24, 24, 27, 0.95);
@@ -126,6 +124,9 @@ function getOverlayHtml() {
       container.style.cssText = 'position: fixed; display: flex; flex-direction: column; gap: 10px; ' + s;
     }
 
+    // ページ読み込み時に位置を適用（CSSとの競合を避けるためJSで一元管理）
+    applyPosition(overlaySettings.position);
+
     const ws = new WebSocket('ws://' + location.host);
     ws.onmessage = (e) => {
       const data = JSON.parse(e.data);
@@ -139,6 +140,9 @@ function getOverlayHtml() {
     };
 
     function showAlert(data) {
+      // アラートと一緒に位置情報が来た場合は即時反映
+      if (data.position) applyPosition(data.position);
+
       const dur = overlaySettings.displayDuration || 5000;
       const fadeDelay = (dur - 500) / 1000;
       const removeDelay = dur + 500;
@@ -306,6 +310,33 @@ async function fetchChannelInfo(userId) {
   });
 }
 
+async function fetchUserProfile(userId) {
+  return new Promise((resolve) => {
+    const req = https.request({
+      hostname: 'api.twitch.tv',
+      path: `/helix/users?id=${userId}`,
+      method: 'GET',
+      headers: {
+        'Client-Id': CLIENT_ID,
+        'Authorization': `Bearer ${accessToken}`,
+      },
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(data);
+          resolve(parsed.data?.[0] || null);
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+    req.on('error', () => resolve(null));
+    req.end();
+  });
+}
+
 async function ensureTmiConnected() {
   if (tmiClient) return;
   tmiClient = new tmi.Client({
@@ -325,17 +356,22 @@ async function ensureTmiConnected() {
   }
 }
 
-async function sendRaidChat(template, event, channelInfo) {
+async function sendRaidChat(template, event, channelInfo, userProfile, doShoutout) {
   if (!template || !template.trim()) return;
   if (!broadcasterName) return;
 
-  const game = channelInfo?.game_name || '不明';
-  const title = channelInfo?.title || '';
+  const userName = event.from_broadcaster_user_name || 'Someone';
+  const userLogin = event.from_broadcaster_user_login || userName;
+  const game    = channelInfo?.game_name || '不明';
+  const title   = channelInfo?.title || '';
+  const profile = userProfile?.description || '';
+
   const message = template
-    .replace('{user}', event.from_broadcaster_user_name || 'Someone')
-    .replace('{viewers}', event.viewers || '0')
-    .replace('{game}', game)
-    .replace('{title}', title);
+    .replace(/\{user\}/g,    userName)
+    .replace(/\{viewers\}/g, String(event.viewers || '0'))
+    .replace(/\{game\}/g,    game)
+    .replace(/\{title\}/g,   title)
+    .replace(/\{profile\}/g, profile);
 
   await ensureTmiConnected();
   if (!tmiClient) return;
@@ -343,6 +379,11 @@ async function sendRaidChat(template, event, channelInfo) {
   try {
     await tmiClient.say(broadcasterName, message);
     log(`Raid chat sent: ${message}`);
+
+    if (doShoutout && userLogin) {
+      await tmiClient.say(broadcasterName, `/shoutout ${userLogin}`);
+      log(`Shoutout sent: /shoutout ${userLogin}`);
+    }
   } catch (err) {
     log(`Raid chat failed: ${err.message}`);
   }
@@ -393,14 +434,24 @@ function connectToEventSub() {
           image: alertConfig.image ? path.basename(alertConfig.image) : null,
           imageSize: alertConfig.imageSize || 'md',
           animation: alertConfig.animation || 'slide-up',
+          position: settings?.overlay?.position || 'bottom-center',
         });
 
         sendEvent(eventType, { message, user: event.user_name });
 
-        // レイド時：チャンネル情報を取得してチャットに投稿
-        if (eventType === 'raid' && alertConfig.chatMessage) {
-          fetchChannelInfo(event.from_broadcaster_user_id).then(channelInfo => {
-            sendRaidChat(alertConfig.chatMessage, event, channelInfo);
+        // レイド時：チャンネル情報・プロフィールを取得してお礼チャットを投稿
+        if (eventType === 'raid' && settings.raidChat?.enabled) {
+          Promise.all([
+            fetchChannelInfo(event.from_broadcaster_user_id),
+            fetchUserProfile(event.from_broadcaster_user_id),
+          ]).then(([channelInfo, userProfile]) => {
+            sendRaidChat(
+              settings.raidChat.messageTemplate,
+              event,
+              channelInfo,
+              userProfile,
+              settings.raidChat.shoutout,
+            );
           });
         }
       }
@@ -453,12 +504,13 @@ function stop() {
 const FAKE_EVENTS = {
   follow:        { user_name: 'test_user' },
   subscribe:     { user_name: 'test_user' },
-  raid:          { from_broadcaster_user_name: 'test_channel', from_broadcaster_user_id: '0', viewers: 10 },
+  raid:          { from_broadcaster_user_name: 'test_channel', from_broadcaster_user_login: 'test_channel', from_broadcaster_user_id: '0', viewers: 10 },
   bits:          { user_name: 'test_user', bits: 100 },
   channelPoints: { user_name: 'test_user' },
 };
 
-const FAKE_CHANNEL_INFO = { game_name: 'テストゲーム', title: 'テスト配信タイトル' };
+const FAKE_CHANNEL_INFO  = { game_name: 'テストゲーム', title: 'テスト配信タイトル' };
+const FAKE_USER_PROFILE  = { description: 'ゲーム実況メインの配信者' };
 
 function handleTestAlert(key) {
   const alertConfig = settings?.alerts?.[key];
@@ -481,11 +533,18 @@ function handleTestAlert(key) {
     image: alertConfig.image ? path.basename(alertConfig.image) : null,
     imageSize: alertConfig.imageSize || 'md',
     animation: alertConfig.animation || 'slide-up',
+    position: settings?.overlay?.position || 'bottom-center',
   });
 
-  // レイドのチャット投稿テスト
-  if (key === 'raid' && alertConfig.chatMessage) {
-    sendRaidChat(alertConfig.chatMessage, event, FAKE_CHANNEL_INFO);
+  // レイドのお礼チャットテスト
+  if (key === 'raid' && settings.raidChat?.enabled) {
+    sendRaidChat(
+      settings.raidChat.messageTemplate,
+      event,
+      FAKE_CHANNEL_INFO,
+      FAKE_USER_PROFILE,
+      settings.raidChat.shoutout,
+    );
   }
 
   log(`Test alert fired: ${key}`);

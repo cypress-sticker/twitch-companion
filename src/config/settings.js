@@ -13,9 +13,14 @@ const DEFAULT_SETTINGS = {
   alerts: {
     follow:        { enabled: true,  message: '{user} さんがフォローしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
     subscribe:     { enabled: true,  message: '{user} さんがサブスクしました！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
-    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up', chatMessage: '{user} さんからレイドありがとう！({viewers}人) 直前のゲーム：{game}' },
+    raid:          { enabled: false, message: '{user} さんからレイド！ {viewers}人', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
     bits:          { enabled: false, message: '{user} さんから {amount} Bits！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
     channelPoints: { enabled: false, message: '{user} さんがポイント交換！', soundType: 'default', soundFile: '', volume: 70, image: '', imageSize: 'md', animation: 'slide-up' },
+  },
+  raidChat: {
+    enabled: false,
+    messageTemplate: '{user}さんと{viewers}人のみなさんレイドありがとう！{user}さんは{profile}な人で、さっきまでは{game}を配信してたらしいよ！',
+    shoutout: false,
   },
   periodicComments: {
     enabled: false,
@@ -58,6 +63,7 @@ function loadSettings() {
           channelPoints: mergeAlert(DEFAULT_SETTINGS.alerts.channelPoints, saved.alerts?.channelPoints),
         };
       })(),
+      raidChat: { ...DEFAULT_SETTINGS.raidChat, ...(saved.raidChat || {}) },
       periodicComments: { ...DEFAULT_SETTINGS.periodicComments, ...(saved.periodicComments || {}) },
       overlay: { ...DEFAULT_SETTINGS.overlay, ...(saved.overlay || {}) },
     };

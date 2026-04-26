@@ -10,14 +10,15 @@ const MAX_COMMENTS = 10;
 // ─── Modal Resize ────────────────────────────────────────────────────────────
 
 // サイズを記憶（開くたびに引き継がれ、位置は毎回中央にリセット）
-let modalSize = { w: 520, h: null };
+// 初回はウィンドウいっぱいに開く（w=Infinity → window幅、h=nullは初回計算）
+let modalSize = { w: Infinity, h: null };
 
 function centerModal() {
   const modal = document.querySelector('.modal-content');
   if (!modal) return;
-  if (!modalSize.h) modalSize.h = Math.round(window.innerHeight * 0.75);
-  const w = Math.min(modalSize.w, window.innerWidth - 32);
-  const h = Math.min(modalSize.h, window.innerHeight * 0.92);
+  if (!modalSize.h) modalSize.h = Math.round(window.innerHeight * 0.92);
+  const w = Math.min(modalSize.w, window.innerWidth - 24);
+  const h = Math.min(modalSize.h, window.innerHeight * 0.96);
   modal.style.width  = w + 'px';
   modal.style.height = h + 'px';
   modal.style.left   = Math.max(8, (window.innerWidth  - w) / 2) + 'px';
@@ -113,6 +114,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   // 共通設定UI初期化
   loadCommonSettingsUI();
+
+  // レイドお礼チャット トグル初期化
+  const raidChatToggle = document.getElementById('home-raid-chat');
+  if (raidChatToggle) {
+    raidChatToggle.classList.toggle('on', settings.raidChat?.enabled ?? false);
+  }
 
   window.api.onAuthStatus((data) => {
     authenticated = data.authenticated;
@@ -343,33 +350,120 @@ function loadCommonSettingsUI() {
   // フォントサイズ
   const sizeSlider = document.getElementById('fontsize-slider');
   if (sizeSlider) { sizeSlider.value = ov.fontSize || 18; document.getElementById('fontsize-display').textContent = (ov.fontSize || 18) + 'px'; }
+
+  // ミニモニター初期位置
+  updateMiniMonitor(ov.position || 'bottom-center');
+
+  // 位置ラベル初期表示
+  updatePosLabel(ov.position || 'bottom-center');
+
+  // フォントプレビュー初期表示（markChanged を発火させないよう直接更新）
+  const preview = document.getElementById('font-preview');
+  if (preview) {
+    if (fontSel)    preview.style.fontFamily = fontSel.value;
+    if (sizeSlider) preview.style.fontSize   = sizeSlider.value + 'px';
+  }
+
+  // 保存ボタンを初期状態（グレイアウト）に
+  const saveBtn = document.getElementById('common-save-btn');
+  if (saveBtn) saveBtn.disabled = true;
+}
+
+const POS_LABELS = {
+  'top-left':      '左上',
+  'top-center':    '上中央',
+  'top-right':     '右上',
+  'middle-left':   '左中央',
+  'center':        '中央',
+  'middle-right':  '右中央',
+  'bottom-left':   '左下',
+  'bottom-center': '下中央',
+  'bottom-right':  '右下',
+};
+
+function updatePosLabel(pos) {
+  const label = document.getElementById('selected-pos-label');
+  if (label) label.textContent = '→ ' + (POS_LABELS[pos] || pos);
+}
+
+function markCommonSettingsChanged() {
+  const btn = document.getElementById('common-save-btn');
+  if (btn) btn.disabled = false;
+}
+
+const MONITOR_POS = {
+  'top-left':      { top: '20%', left: '20%' },
+  'top-center':    { top: '20%', left: '50%' },
+  'top-right':     { top: '20%', left: '80%' },
+  'middle-left':   { top: '50%', left: '20%' },
+  'center':        { top: '50%', left: '50%' },
+  'middle-right':  { top: '50%', left: '80%' },
+  'bottom-left':   { top: '80%', left: '20%' },
+  'bottom-center': { top: '80%', left: '50%' },
+  'bottom-right':  { top: '80%', left: '80%' },
+};
+
+function updateMiniMonitor(position) {
+  const dot = document.getElementById('mini-monitor-dot');
+  if (!dot) return;
+  const pos = MONITOR_POS[position] || MONITOR_POS['bottom-center'];
+  dot.style.top  = pos.top;
+  dot.style.left = pos.left;
 }
 
 function setPosition(btn) {
   document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
+  updateMiniMonitor(btn.dataset.pos);
+  updatePosLabel(btn.dataset.pos);
+  markCommonSettingsChanged();
 }
 
 function onDurationChange(val) {
   document.getElementById('duration-display').textContent = val + '秒';
+  markCommonSettingsChanged();
 }
 
 function onFontsizeChange(val) {
   document.getElementById('fontsize-display').textContent = val + 'px';
+  updateFontPreview();
+  markCommonSettingsChanged();
+}
+
+function updateFontPreview() {
+  const fontSel = document.getElementById('font-select');
+  const sizeSlider = document.getElementById('fontsize-slider');
+  const preview = document.getElementById('font-preview');
+  if (!preview) return;
+  if (fontSel)    preview.style.fontFamily = fontSel.value;
+  if (sizeSlider) preview.style.fontSize   = sizeSlider.value + 'px';
+  markCommonSettingsChanged();
 }
 
 async function saveCommonSettings() {
   if (!settings) return;
   const activePos = document.querySelector('.pos-btn.active');
+  const pos = activePos ? activePos.dataset.pos : 'bottom-center';
   const newOverlay = {
     ...settings.overlay,
-    position: activePos ? activePos.dataset.pos : 'bottom-center',
+    position: pos,
     displayDuration: parseInt(document.getElementById('duration-slider').value) * 1000,
     fontFamily: document.getElementById('font-select').value,
     fontSize: parseInt(document.getElementById('fontsize-slider').value),
   };
   settings.overlay = newOverlay;
   await window.api.saveSettings({ overlay: newOverlay });
+
+  // 保存後のUIリセット
+  updatePosLabel(pos);
+  const saveBtn = document.getElementById('common-save-btn');
+  if (saveBtn) saveBtn.disabled = true;
+  const msg = document.getElementById('common-save-msg');
+  if (msg) {
+    msg.style.display = 'inline';
+    clearTimeout(msg._timer);
+    msg._timer = setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
 }
 
 function toggleAlert(el) {
@@ -470,6 +564,8 @@ async function confirmReset() {
         if (el) el.classList.toggle('on', alertDefaults[key]);
       });
     });
+    const raidChatEl = document.getElementById('home-raid-chat');
+    if (raidChatEl) raidChatEl.classList.remove('on');
 
     // コメント入力欄をクリア
     ['wiz-comment-list', 'home-comment-list'].forEach(listId => {
@@ -520,6 +616,7 @@ function openAlertModal(alertKey) {
   const imageName = s.image || '';
   document.getElementById('modal-image-name').textContent = imageName || '選択なし';
   document.getElementById('modal-image-clear').style.display = imageName ? 'block' : 'none';
+  updateModalImageThumb(imageName || null);
   setModalImageSize(s.imageSize || 'md');
 
   // 効果音
@@ -539,13 +636,6 @@ function openAlertModal(alertKey) {
   // メッセージ
   document.getElementById('modal-message').value = s.message;
 
-  // チャット投稿セクション（レイドのみ表示）
-  const raidChatSection = document.getElementById('modal-raid-chat-section');
-  if (raidChatSection) {
-    raidChatSection.style.display = alertKey === 'raid' ? 'flex' : 'none';
-    document.getElementById('modal-chat-message').value = s.chatMessage || '';
-  }
-
   updateModalPreview();
   centerModal();  // 毎回中央に配置（サイズは前回を引き継ぐ）
   document.getElementById('alert-modal').style.display = 'block';
@@ -554,6 +644,8 @@ function openAlertModal(alertKey) {
 function closeAlertModal() {
   document.getElementById('alert-modal').style.display = 'none';
   currentEditingAlert = null;
+  // 次回も最大サイズで開くようリセット
+  modalSize = { w: Infinity, h: null };
 }
 
 function onModalOverlayClick(event) {
@@ -580,9 +672,6 @@ async function saveAlertSettings() {
     image:     imageName,
     imageSize: activeSizeBtn ? activeSizeBtn.dataset.size : 'md',
     animation: activeAnimBtn ? activeAnimBtn.dataset.anim : 'slide-up',
-    ...(currentEditingAlert === 'raid' && {
-      chatMessage: document.getElementById('modal-chat-message').value,
-    }),
   };
 
   settings.alerts[currentEditingAlert] = { ...settings.alerts[currentEditingAlert], ...updated };
@@ -654,17 +743,32 @@ function testPlaySound() {
   audio.play().catch(() => {});
 }
 
+function updateModalImageThumb(filename) {
+  const thumb = document.getElementById('modal-image-thumb');
+  if (!thumb) return;
+  if (filename) {
+    const port = settings?.overlay?.port || 3001;
+    thumb.src = `http://localhost:${port}/custom/${encodeURIComponent(filename)}`;
+    thumb.style.display = 'block';
+  } else {
+    thumb.src = '';
+    thumb.style.display = 'none';
+  }
+}
+
 async function selectModalImage() {
   const filename = await window.api.selectAlertImage();
   if (!filename) return;
   document.getElementById('modal-image-name').textContent = filename;
   document.getElementById('modal-image-clear').style.display = 'block';
+  updateModalImageThumb(filename);
   updateModalPreview();
 }
 
 function clearModalImage() {
   document.getElementById('modal-image-name').textContent = '選択なし';
   document.getElementById('modal-image-clear').style.display = 'none';
+  updateModalImageThumb(null);
   updateModalPreview();
 }
 
@@ -684,6 +788,17 @@ function onVolumeChange(value) {
   document.getElementById('volume-display').textContent = value + '%';
 }
 
+function insertVar(inputId, variable) {
+  const input = document.getElementById(inputId);
+  if (!input) return;
+  const start = input.selectionStart;
+  const end   = input.selectionEnd;
+  input.value = input.value.slice(0, start) + variable + input.value.slice(end);
+  const newPos = start + variable.length;
+  input.setSelectionRange(newPos, newPos);
+  input.focus();
+}
+
 function setModalImageSize(size) {
   document.querySelectorAll('.size-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.size === size);
@@ -695,4 +810,131 @@ function setModalAnimation(anim) {
   document.querySelectorAll('.anim-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.anim === anim);
   });
+}
+
+// ─── Raid Chat Modal ─────────────────────────────────────────────────────────
+
+const CHIP_DEFS = {
+  user:    'レイド元',
+  viewers: '人数',
+  game:    'ゲーム',
+  title:   'タイトル',
+  profile: 'プロフィール',
+};
+
+/** テンプレート文字列 → チップHTMLに変換 */
+function templateToEditorHtml(template) {
+  const escaped = template
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+  return escaped.replace(/\{(user|viewers|game|title|profile)\}/g, (match, key) => {
+    const label = CHIP_DEFS[key] || key;
+    return `<span class="chip-token" contenteditable="false" data-key="${key}">${label}</span>`;
+  });
+}
+
+/** チップエディタ DOM → テンプレート文字列に変換 */
+function editorToTemplate(editor) {
+  let result = '';
+  editor.childNodes.forEach(node => {
+    if (node.nodeType === Node.TEXT_NODE) {
+      result += node.textContent;
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.classList.contains('chip-token')) {
+        result += '{' + node.dataset.key + '}';
+      } else if (node.tagName !== 'BR') {
+        result += node.textContent;
+      }
+    }
+  });
+  return result;
+}
+
+/** チップ要素を生成 */
+function createChipElement(key) {
+  const chip = document.createElement('span');
+  chip.className = 'chip-token';
+  chip.contentEditable = 'false';
+  chip.dataset.key = key;
+  chip.textContent = CHIP_DEFS[key] || key;
+  return chip;
+}
+
+/** カーソル位置にチップを挿入 */
+function insertChipToEditor(key) {
+  const editor = document.getElementById('raid-chat-editor');
+  if (!editor) return;
+  editor.focus();
+  const sel = window.getSelection();
+  const chip = createChipElement(key);
+  if (!sel || !sel.rangeCount || !editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    editor.appendChild(chip);
+  } else {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(chip);
+    range.setStartAfter(chip);
+    range.setEndAfter(chip);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+}
+
+/** チップクリック → 削除確認 */
+function onChipEditorClick(event) {
+  const chip = event.target.closest('.chip-token');
+  if (!chip) return;
+  if (confirm(`「${chip.textContent}」チップを削除しますか？`)) {
+    chip.remove();
+  }
+}
+
+/** レイドチャットモーダルを開く */
+function openRaidChatModal() {
+  if (!settings) return;
+  const rc = settings.raidChat || {};
+
+  // ホームのトグル状態を優先
+  const homeToggle = document.getElementById('home-raid-chat');
+  const isEnabled = homeToggle ? homeToggle.classList.contains('on') : (rc.enabled ?? false);
+  document.getElementById('raid-chat-modal-toggle').classList.toggle('on', isEnabled);
+
+  // チップエディタを設定
+  const editor = document.getElementById('raid-chat-editor');
+  editor.innerHTML = templateToEditorHtml(rc.messageTemplate || '');
+
+  // シャウトアウトチェックボックス
+  document.getElementById('raid-chat-shoutout').checked = rc.shoutout ?? false;
+
+  document.getElementById('raid-chat-modal').style.display = 'block';
+}
+
+/** レイドチャットモーダルを閉じる */
+function closeRaidChatModal() {
+  document.getElementById('raid-chat-modal').style.display = 'none';
+}
+
+/** モーダル背景クリックで閉じる */
+function onRaidChatOverlayClick(event) {
+  if (event.target === document.getElementById('raid-chat-modal')) closeRaidChatModal();
+}
+
+/** レイドチャット設定を保存 */
+async function saveRaidChatSettings() {
+  if (!settings) return;
+  const editor = document.getElementById('raid-chat-editor');
+  const template = editorToTemplate(editor);
+  const enabled  = document.getElementById('raid-chat-modal-toggle').classList.contains('on');
+  const shoutout = document.getElementById('raid-chat-shoutout').checked;
+
+  const newRaidChat = { enabled, messageTemplate: template, shoutout };
+  settings.raidChat = newRaidChat;
+
+  // ホームのトグルと同期
+  const homeToggle = document.getElementById('home-raid-chat');
+  if (homeToggle) homeToggle.classList.toggle('on', enabled);
+
+  await window.api.saveSettings(settings);
+  closeRaidChatModal();
 }

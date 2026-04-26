@@ -153,19 +153,15 @@
   <div id="screen-home" class="screen">
     <div class="main-content">
       <div id="home-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="margin-bottom:16px;">
           <h1 style="font-size:24px;">ホーム <span id="username" style="font-size:16px; font-weight:400; color:var(--text-muted);"></span></h1>
-          <div style="display:flex; gap:8px;">
-            <button class="btn btn-secondary" onclick="exportSettings()">設定をエクスポート</button>
-            <button class="btn btn-secondary" onclick="importSettings()">設定をインポート</button>
-          </div>
         </div>
 
         <!-- Home Tabs -->
         <div class="home-tabs">
-          <button class="home-tab active" data-tab="alert" onclick="switchHomeTab('alert')">🔔 アラート</button>
-          <button class="home-tab" data-tab="comment" onclick="switchHomeTab('comment')">💬 定期コメント</button>
-          <button class="home-tab" data-tab="common" onclick="switchHomeTab('common')">⚙ 共通設定</button>
+          <button class="home-tab active" data-tab="alert" onclick="switchHomeTab('alert')"><img class="tab-icon" src="../assets/icons/bell.png" alt="">アラート</button>
+          <button class="home-tab" data-tab="comment" onclick="switchHomeTab('comment')"><img class="tab-icon" src="../assets/icons/comments.png" alt="">定期コメント</button>
+          <button class="home-tab" data-tab="common" onclick="switchHomeTab('common')"><img class="tab-icon" src="../assets/icons/gear.png" alt="">共通設定</button>
         </div>
 
         <!-- Tab: アラート -->
@@ -188,6 +184,12 @@
               <div class="alert-name">レイド通知</div>
               <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('raid')">設定 ⚙</button>
+            </div>
+            <div class="alert-row">
+              <div id="home-raid-chat" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">レイドお礼チャット</div>
+              <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openRaidChatModal()">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
@@ -240,17 +242,32 @@
 
           <!-- オーバーレイ表示位置 -->
           <div class="common-section">
-            <div class="common-label">オーバーレイ表示位置</div>
-            <div class="position-grid">
-              <button class="pos-btn" data-pos="top-left"      onclick="setPosition(this)" title="左上">↖</button>
-              <button class="pos-btn" data-pos="top-center"    onclick="setPosition(this)" title="上中央">↑</button>
-              <button class="pos-btn" data-pos="top-right"     onclick="setPosition(this)" title="右上">↗</button>
-              <button class="pos-btn" data-pos="middle-left"   onclick="setPosition(this)" title="左中央">←</button>
-              <button class="pos-btn" data-pos="center"        onclick="setPosition(this)" title="中央">●</button>
-              <button class="pos-btn" data-pos="middle-right"  onclick="setPosition(this)" title="右中央">→</button>
-              <button class="pos-btn" data-pos="bottom-left"   onclick="setPosition(this)" title="左下">↙</button>
-              <button class="pos-btn active" data-pos="bottom-center" onclick="setPosition(this)" title="下中央">↓</button>
-              <button class="pos-btn" data-pos="bottom-right"  onclick="setPosition(this)" title="右下">↘</button>
+            <div class="common-label" style="display:flex; align-items:center; gap:8px;">
+              オーバーレイ表示位置
+              <span id="selected-pos-label" style="font-size:12px; color:var(--accent); font-weight:600; text-transform:none; letter-spacing:0;"></span>
+            </div>
+            <div class="position-area">
+              <div class="position-grid">
+                <button class="pos-btn" data-pos="top-left"      onclick="setPosition(this)" title="左上">↖</button>
+                <button class="pos-btn" data-pos="top-center"    onclick="setPosition(this)" title="上中央">↑</button>
+                <button class="pos-btn" data-pos="top-right"     onclick="setPosition(this)" title="右上">↗</button>
+                <button class="pos-btn" data-pos="middle-left"   onclick="setPosition(this)" title="左中央">←</button>
+                <button class="pos-btn" data-pos="center"        onclick="setPosition(this)" title="中央">●</button>
+                <button class="pos-btn" data-pos="middle-right"  onclick="setPosition(this)" title="右中央">→</button>
+                <button class="pos-btn" data-pos="bottom-left"   onclick="setPosition(this)" title="左下">↙</button>
+                <button class="pos-btn active" data-pos="bottom-center" onclick="setPosition(this)" title="下中央">↓</button>
+                <button class="pos-btn" data-pos="bottom-right"  onclick="setPosition(this)" title="右下">↘</button>
+              </div>
+              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                <div class="mini-monitor">
+                  <div class="mini-monitor-screen">
+                    <div id="mini-monitor-dot" class="mini-monitor-dot"></div>
+                  </div>
+                  <div class="mini-monitor-stand"></div>
+                </div>
+                <span id="common-save-msg" style="font-size:11px; color:var(--success); display:none; white-space:nowrap;">✓ 保存しました</span>
+                <button id="common-save-btn" class="btn btn-primary" onclick="saveCommonSettings()" disabled style="font-size:12px; padding:6px 16px; width:100%;">保存</button>
+              </div>
             </div>
           </div>
 
@@ -265,10 +282,10 @@
             </div>
           </div>
 
-          <!-- フォント -->
+          <!-- フォント・サイズ -->
           <div class="common-section">
             <div class="common-label">フォント</div>
-            <select id="font-select" class="input" style="width:auto;">
+            <select id="font-select" class="input" style="width:auto;" onchange="updateFontPreview()">
               <option value="'Yu Gothic UI', 'Yu Gothic', sans-serif">Yu Gothic UI</option>
               <option value="Meiryo, sans-serif">Meiryo（メイリオ）</option>
               <option value="'BIZ UDGothic', sans-serif">BIZ UDゴシック</option>
@@ -286,11 +303,9 @@
               <span style="font-size:13px;">32px</span>
               <span id="fontsize-display" class="volume-value">18px</span>
             </div>
+            <div id="font-preview" class="font-preview">🎉 cypress_sticker さんがフォローしました！</div>
           </div>
 
-          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
-            <button class="btn btn-primary" onclick="saveCommonSettings()">保存</button>
-          </div>
         </div>
 
         <div style="margin-top:16px; display:flex; justify-content:flex-end;">
@@ -333,6 +348,7 @@
           <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-secondary" onclick="selectModalImage()" style="font-size:12px; padding:8px 14px;">ファイルを選択</button>
             <span id="modal-image-name" style="font-size:12px; color:#adadb8; flex:1;">選択なし</span>
+            <img id="modal-image-thumb" class="modal-image-thumb" alt="">
             <button id="modal-image-clear" class="alert-settings-btn" onclick="clearModalImage()" style="display:none;">✕ 削除</button>
           </div>
           <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
@@ -384,13 +400,6 @@
           <div class="var-hint">{user} = ユーザー名　{viewers} = 人数（レイド用）　{amount} = ビッツ数</div>
         </div>
 
-        <!-- チャット投稿（レイドのみ） -->
-        <div id="modal-raid-chat-section" class="modal-section" style="display:none;">
-          <div class="modal-section-label">チャット投稿</div>
-          <input type="text" id="modal-chat-message" class="input" placeholder="空欄にすると投稿しません">
-          <div class="var-hint">{user} = ユーザー名　{viewers} = 人数　{game} = ゲーム名　{title} = 配信タイトル</div>
-        </div>
-
       </div>
 
       <!-- Bottom: Preview + Footer (always visible) -->
@@ -405,6 +414,56 @@
         <div class="modal-footer">
           <button class="btn btn-secondary" onclick="closeAlertModal()">キャンセル</button>
           <button class="btn btn-primary" onclick="saveAlertSettings()">保存</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Raid Chat Modal ─── -->
+  <div id="raid-chat-modal" class="modal-overlay" style="display:none;" onclick="onRaidChatOverlayClick(event)">
+    <div class="modal-content" style="max-width:520px;">
+
+      <!-- Header -->
+      <div class="modal-header">
+        <span>レイドお礼チャット の設定</span>
+        <div style="display:flex; align-items:center; gap:12px;">
+          <div id="raid-chat-modal-toggle" class="toggle" onclick="toggleAlert(this)"></div>
+          <button class="modal-close" onclick="closeRaidChatModal()">×</button>
+        </div>
+      </div>
+
+      <!-- Settings -->
+      <div class="modal-settings">
+
+        <!-- チップ挿入ボタン -->
+        <div class="modal-section">
+          <div class="modal-section-label">メッセージ</div>
+          <div class="chip-insert-row">
+            <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('user',    'レイド元')">＋ レイド元</button>
+            <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('viewers', '人数')"   >＋ 人数</button>
+            <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('game',    'ゲーム')" >＋ ゲーム</button>
+            <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('title',   'タイトル')">＋ タイトル</button>
+            <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('profile', 'プロフィール')">＋ プロフィール</button>
+          </div>
+          <div id="raid-chat-editor" class="chip-editor" contenteditable="true" spellcheck="false" onclick="onChipEditorClick(event)"></div>
+          <div class="var-hint">チップをクリックすると削除できます</div>
+        </div>
+
+        <!-- シャウトアウト -->
+        <div class="modal-section">
+          <label class="radio-label" style="gap:10px; cursor:pointer;">
+            <input type="checkbox" id="raid-chat-shoutout">
+            <span>シャウトアウトを送る（<code>/shoutout</code> コマンド）</span>
+          </label>
+        </div>
+
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-bottom">
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeRaidChatModal()">キャンセル</button>
+          <button class="btn btn-primary" onclick="saveRaidChatSettings()">保存</button>
         </div>
       </div>
     </div>

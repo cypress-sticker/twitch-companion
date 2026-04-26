@@ -168,6 +168,7 @@ function goToWizardStart() {
 }
 
 function syncHomeToWizard() {
+  // アラートトグル同期
   ['follow', 'subscribe', 'raid', 'bits', 'points'].forEach(key => {
     const home = document.getElementById('home-' + key);
     const wiz = document.getElementById('wiz-' + key);
@@ -175,6 +176,26 @@ function syncHomeToWizard() {
       wiz.classList.toggle('on', home.classList.contains('on'));
     }
   });
+
+  // 定期コメント同期（ホーム→ウィザード）
+  const homeList = document.getElementById('home-comment-list');
+  const wizList  = document.getElementById('wiz-comment-list');
+  const homeInterval = document.getElementById('interval-input');
+  const wizInterval  = document.querySelector('#step-4 input[type="number"]');
+  if (homeList && wizList) {
+    const inputs = homeList.querySelectorAll('input[type="text"]');
+    wizList.innerHTML = '';
+    inputs.forEach(input => {
+      const row = document.createElement('div');
+      row.className = 'comment-row';
+      row.innerHTML = `
+        <input type="text" class="input" placeholder="メッセージを入力..." value="${input.value.replace(/"/g, '&quot;')}">
+        <button class="delete-btn" onclick="removeComment(this)">×</button>
+      `;
+      wizList.appendChild(row);
+    });
+  }
+  if (homeInterval && wizInterval) wizInterval.value = homeInterval.value;
 }
 
 function goToHome() {
@@ -374,6 +395,18 @@ function addComment(listId) {
 
 function removeComment(btn) {
   btn.parentElement.remove();
+}
+
+async function savePeriodicComments() {
+  if (!settings) return;
+  const messages = Array.from(document.querySelectorAll('#home-comment-list .input'))
+    .map(el => el.value).filter(v => v.trim());
+  const intervalMinutes = parseInt(document.getElementById('interval-input')?.value) || 30;
+  const newPeriodic = { enabled: true, intervalMinutes, messages };
+  settings.periodicComments = newPeriodic;
+  await window.api.saveSettings({ periodicComments: newPeriodic });
+  // bot-server が未起動なら起動を依頼
+  if (messages.length > 0) window.api.startBotServer();
 }
 
 async function saveSettings() {

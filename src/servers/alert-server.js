@@ -398,6 +398,47 @@ function stop() {
   sendStatus('stopped');
 }
 
+const FAKE_EVENTS = {
+  follow:        { user_name: 'test_user' },
+  subscribe:     { user_name: 'test_user' },
+  raid:          { from_broadcaster_user_name: 'test_channel', from_broadcaster_user_id: '0', viewers: 10 },
+  bits:          { user_name: 'test_user', bits: 100 },
+  channelPoints: { user_name: 'test_user' },
+};
+
+const FAKE_CHANNEL_INFO = { game_name: 'テストゲーム', title: 'テスト配信タイトル' };
+
+function handleTestAlert(key) {
+  const alertConfig = settings?.alerts?.[key];
+  if (!alertConfig) return;
+
+  const event = FAKE_EVENTS[key];
+  if (!event) return;
+
+  const message = (alertConfig.message || '')
+    .replace('{user}', event.user_name || event.from_broadcaster_user_name || 'test_user')
+    .replace('{viewers}', event.viewers || '10')
+    .replace('{amount}', event.bits || '100');
+
+  broadcastToOverlay({
+    type: 'alert',
+    message,
+    soundType: alertConfig.soundType || 'default',
+    soundFile: alertConfig.soundFile || '',
+    volume: alertConfig.volume ?? 70,
+    image: alertConfig.image ? path.basename(alertConfig.image) : null,
+    imageSize: alertConfig.imageSize || 'md',
+    animation: alertConfig.animation || 'slide-up',
+  });
+
+  // レイドのチャット投稿テスト
+  if (key === 'raid' && alertConfig.chatMessage) {
+    sendRaidChat(alertConfig.chatMessage, event, FAKE_CHANNEL_INFO);
+  }
+
+  log(`Test alert fired: ${key}`);
+}
+
 process.on('message', (msg) => {
   if (msg.type === 'start') {
     start(msg.config);
@@ -405,6 +446,8 @@ process.on('message', (msg) => {
     stop();
   } else if (msg.type === 'update-settings') {
     settings = msg.settings;
+  } else if (msg.type === 'test-alert') {
+    handleTestAlert(msg.key);
   }
 });
 

@@ -289,6 +289,10 @@ function toggleAlert(el) {
   el.classList.toggle('on');
 }
 
+async function testAlert(key) {
+  await window.api.testAlert(key);
+}
+
 function addComment(listId) {
   const list = document.getElementById(listId);
   if (list.children.length >= MAX_COMMENTS) return;

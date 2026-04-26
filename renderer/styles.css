@@ -501,6 +501,22 @@ body {
 .volume-row input[type="range"] { flex: 1; accent-color: var(--accent); }
 .volume-value { font-size: 12px; min-width: 36px; color: var(--text-muted); }
 
+/* Alert row テストボタン */
+.alert-test-btn {
+  background: transparent;
+  border: 1px solid var(--border-sub);
+  color: var(--success);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.alert-test-btn:hover { background: var(--success); color: #fff; border-color: var(--success); }
+
 /* Alert row 設定ボタン */
 .alert-settings-btn {
   background: transparent;

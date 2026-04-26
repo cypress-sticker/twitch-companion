@@ -234,6 +234,10 @@ ipcMain.handle(IPC.SETTINGS_RESET, () => {
 
 ipcMain.on(IPC.ALERT_START, () => startAlertServer());
 ipcMain.on(IPC.ALERT_STOP, () => stopAlertServer());
+ipcMain.handle(IPC.ALERT_TEST, (event, key) => {
+  if (alertServer) alertServer.send({ type: 'test-alert', key });
+  return true;
+});
 ipcMain.on(IPC.BOT_START, () => startBotServer());
 ipcMain.on(IPC.BOT_STOP, () => stopBotServer());
 

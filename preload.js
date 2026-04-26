@@ -50,6 +50,7 @@ contextBridge.exposeInMainWorld('api', {
   getOverlayUrl: () => ipcRenderer.invoke(IPC.OVERLAY_URL),
   selectAlertImage: () => ipcRenderer.invoke(IPC.ALERT_SELECT_IMAGE),
   selectAlertSound: () => ipcRenderer.invoke(IPC.ALERT_SELECT_SOUND),
+  testAlert: (key) => ipcRenderer.invoke(IPC.ALERT_TEST, key),
   onShowAlert: (cb) => {
     ipcRenderer.removeAllListeners(IPC.OVERLAY_SHOW_ALERT);
     ipcRenderer.on(IPC.OVERLAY_SHOW_ALERT, (e, data) => cb(data));

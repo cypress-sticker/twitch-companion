@@ -33,4 +33,7 @@ module.exports = {
   // Asset File Selection
   ALERT_SELECT_IMAGE: 'alert:select-image',
   ALERT_SELECT_SOUND: 'alert:select-sound',
+
+  // Test
+  ALERT_TEST: 'alert:test',
 };

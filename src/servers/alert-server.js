@@ -41,23 +41,39 @@ function sendEvent(eventType, data) {
   process.send({ type: 'event', eventType, data });
 }
 
+const POSITION_CSS = {
+  'top-left':      'top: 20px; left: 20px; align-items: flex-start;',
+  'top-center':    'top: 20px; left: 50%; transform: translateX(-50%);',
+  'top-right':     'top: 20px; right: 20px; align-items: flex-end;',
+  'middle-left':   'top: 50%; left: 20px; transform: translateY(-50%); align-items: flex-start;',
+  'center':        'top: 50%; left: 50%; transform: translate(-50%, -50%);',
+  'middle-right':  'top: 50%; right: 20px; transform: translateY(-50%); align-items: flex-end;',
+  'bottom-left':   'bottom: 20px; left: 20px; align-items: flex-start;',
+  'bottom-center': 'bottom: 20px; left: 50%; transform: translateX(-50%);',
+  'bottom-right':  'bottom: 20px; right: 20px; align-items: flex-end;',
+};
+
 function getOverlayHtml() {
+  const ov = settings?.overlay || {};
+  const posStyle = POSITION_CSS[ov.position] || POSITION_CSS['bottom-center'];
+  const font = ov.fontFamily || "'Yu Gothic UI', sans-serif";
+  const fontSize = ov.fontSize || 18;
+  const dur = ov.displayDuration || 5000;
+
   return `<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { background: transparent; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+    body { background: transparent; font-family: ${font}; font-size: ${fontSize}px; overflow: hidden; }
     #alert-container {
       position: fixed;
-      bottom: 20px;
-      left: 50%;
-      transform: translateX(-50%);
       display: flex;
       flex-direction: column;
       gap: 10px;
       align-items: center;
+      ${posStyle}
     }
     .alert {
       background: rgba(24, 24, 27, 0.95);
@@ -65,7 +81,6 @@ function getOverlayHtml() {
       border-radius: 12px;
       padding: 16px 24px;
       color: #fff;
-      font-size: 18px;
       display: flex;
       align-items: center;
       gap: 12px;
@@ -73,12 +88,6 @@ function getOverlayHtml() {
     .alert img.img-sm { width: 32px;  height: 32px;  border-radius: 6px; }
     .alert img.img-md { width: 48px;  height: 48px;  border-radius: 8px; }
     .alert img.img-lg { width: 72px;  height: 72px;  border-radius: 10px; }
-
-    .alert.slide-up   { animation: slideUpAnim   0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
-    .alert.slide-down { animation: slideDownAnim 0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
-    .alert.fade-in    { animation: fadeInAnim    0.5s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
-    .alert.zoom-in    { animation: zoomInAnim    0.3s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
-    .alert.bounce     { animation: bounceAnim    0.7s ease-out forwards, fadeOut 0.5s ease-in 4.5s forwards; }
 
     @keyframes slideUpAnim   { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes slideDownAnim { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -94,14 +103,57 @@ function getOverlayHtml() {
   <script>
     const container = document.getElementById('alert-container');
     const chime = document.getElementById('chime');
+    let overlaySettings = {
+      displayDuration: ${dur},
+      position: '${ov.position || 'bottom-center'}',
+      fontFamily: ${JSON.stringify(font)},
+      fontSize: ${fontSize},
+    };
+
+    function applyPosition(pos) {
+      const styles = {
+        'top-left':      'top: 20px; left: 20px; align-items: flex-start;',
+        'top-center':    'top: 20px; left: 50%; transform: translateX(-50%);',
+        'top-right':     'top: 20px; right: 20px; align-items: flex-end;',
+        'middle-left':   'top: 50%; left: 20px; transform: translateY(-50%); align-items: flex-start;',
+        'center':        'top: 50%; left: 50%; transform: translate(-50%, -50%);',
+        'middle-right':  'top: 50%; right: 20px; transform: translateY(-50%); align-items: flex-end;',
+        'bottom-left':   'bottom: 20px; left: 20px; align-items: flex-start;',
+        'bottom-center': 'bottom: 20px; left: 50%; transform: translateX(-50%);',
+        'bottom-right':  'bottom: 20px; right: 20px; align-items: flex-end;',
+      };
+      const s = styles[pos] || styles['bottom-center'];
+      container.style.cssText = 'position: fixed; display: flex; flex-direction: column; gap: 10px; ' + s;
+    }
+
     const ws = new WebSocket('ws://' + location.host);
     ws.onmessage = (e) => {
       const data = JSON.parse(e.data);
       if (data.type === 'alert') showAlert(data);
+      if (data.type === 'settings-update') {
+        overlaySettings = { ...overlaySettings, ...data.overlay };
+        document.body.style.fontFamily = overlaySettings.fontFamily;
+        document.body.style.fontSize = overlaySettings.fontSize + 'px';
+        applyPosition(overlaySettings.position);
+      }
     };
+
     function showAlert(data) {
+      const dur = overlaySettings.displayDuration || 5000;
+      const fadeDelay = (dur - 500) / 1000;
+      const removeDelay = dur + 500;
+
       const div = document.createElement('div');
-      div.className = 'alert ' + (data.animation || 'slide-up');
+      div.className = 'alert';
+
+      const animMap = {
+        'slide-up':   \`slideUpAnim   0.3s ease-out forwards, fadeOut 0.5s ease-in \${fadeDelay}s forwards\`,
+        'slide-down': \`slideDownAnim 0.3s ease-out forwards, fadeOut 0.5s ease-in \${fadeDelay}s forwards\`,
+        'fade-in':    \`fadeInAnim    0.5s ease-out forwards, fadeOut 0.5s ease-in \${fadeDelay}s forwards\`,
+        'zoom-in':    \`zoomInAnim    0.3s ease-out forwards, fadeOut 0.5s ease-in \${fadeDelay}s forwards\`,
+        'bounce':     \`bounceAnim    0.7s ease-out forwards, fadeOut 0.5s ease-in \${fadeDelay}s forwards\`,
+      };
+      div.style.animation = animMap[data.animation] || animMap['slide-up'];
 
       if (data.image) {
         const img = document.createElement('img');
@@ -127,7 +179,7 @@ function getOverlayHtml() {
         audio.play().catch(() => {});
       }
 
-      setTimeout(() => div.remove(), 5500);
+      setTimeout(() => div.remove(), removeDelay);
     }
   </script>
 </body>
@@ -446,6 +498,7 @@ process.on('message', (msg) => {
     stop();
   } else if (msg.type === 'update-settings') {
     settings = msg.settings;
+    broadcastToOverlay({ type: 'settings-update', overlay: settings.overlay });
   } else if (msg.type === 'test-alert') {
     handleTestAlert(msg.key);
   }

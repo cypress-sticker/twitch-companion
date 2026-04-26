@@ -25,6 +25,9 @@ const DEFAULT_SETTINGS = {
   overlay: {
     port: 3001,
     displayDuration: 5000,
+    position: 'bottom-center',
+    fontFamily: "'Yu Gothic UI', 'Yu Gothic', sans-serif",
+    fontSize: 18,
   },
   theme: 'dark',
 };

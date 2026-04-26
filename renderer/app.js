@@ -111,6 +111,9 @@ document.addEventListener('DOMContentLoaded', async () => {
   // モーダルリサイズ初期化
   initModalResize();
 
+  // 共通設定UI初期化
+  loadCommonSettingsUI();
+
   window.api.onAuthStatus((data) => {
     authenticated = data.authenticated;
     if (authenticated) {
@@ -283,6 +286,69 @@ function syncAlertsToHome() {
       });
     }
   }
+}
+
+// ─── Home Tabs ───────────────────────────────────────────────────────────────
+
+function switchHomeTab(tab) {
+  document.querySelectorAll('.home-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === tab);
+  });
+  document.querySelectorAll('.home-tab-content').forEach(el => {
+    el.style.display = el.id === 'home-tab-' + tab ? '' : 'none';
+  });
+}
+
+// ─── Common Settings ─────────────────────────────────────────────────────────
+
+function loadCommonSettingsUI() {
+  if (!settings?.overlay) return;
+  const ov = settings.overlay;
+
+  // 位置グリッド
+  document.querySelectorAll('.pos-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.pos === (ov.position || 'bottom-center'));
+  });
+
+  // 表示時間
+  const dur = Math.round((ov.displayDuration || 5000) / 1000);
+  const durSlider = document.getElementById('duration-slider');
+  if (durSlider) { durSlider.value = dur; document.getElementById('duration-display').textContent = dur + '秒'; }
+
+  // フォント
+  const fontSel = document.getElementById('font-select');
+  if (fontSel) fontSel.value = ov.fontFamily || "'Yu Gothic UI', 'Yu Gothic', sans-serif";
+
+  // フォントサイズ
+  const sizeSlider = document.getElementById('fontsize-slider');
+  if (sizeSlider) { sizeSlider.value = ov.fontSize || 18; document.getElementById('fontsize-display').textContent = (ov.fontSize || 18) + 'px'; }
+}
+
+function setPosition(btn) {
+  document.querySelectorAll('.pos-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+function onDurationChange(val) {
+  document.getElementById('duration-display').textContent = val + '秒';
+}
+
+function onFontsizeChange(val) {
+  document.getElementById('fontsize-display').textContent = val + 'px';
+}
+
+async function saveCommonSettings() {
+  if (!settings) return;
+  const activePos = document.querySelector('.pos-btn.active');
+  const newOverlay = {
+    ...settings.overlay,
+    position: activePos ? activePos.dataset.pos : 'bottom-center',
+    displayDuration: parseInt(document.getElementById('duration-slider').value) * 1000,
+    fontFamily: document.getElementById('font-select').value,
+    fontSize: parseInt(document.getElementById('fontsize-slider').value),
+  };
+  settings.overlay = newOverlay;
+  await window.api.saveSettings({ overlay: newOverlay });
 }
 
 function toggleAlert(el) {

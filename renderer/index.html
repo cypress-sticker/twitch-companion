@@ -153,87 +153,144 @@
   <div id="screen-home" class="screen">
     <div class="main-content">
       <div id="home-content">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-          <h1 style="font-size:24px;">ホーム <span id="username" style="font-size:16px; font-weight:400; color:#adadb8;"></span></h1>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+          <h1 style="font-size:24px;">ホーム <span id="username" style="font-size:16px; font-weight:400; color:var(--text-muted);"></span></h1>
           <div style="display:flex; gap:8px;">
             <button class="btn btn-secondary" onclick="exportSettings()">設定をエクスポート</button>
             <button class="btn btn-secondary" onclick="importSettings()">設定をインポート</button>
           </div>
         </div>
 
-        <div class="panel-grid">
-          <!-- Alert Section -->
-          <div class="panel-section">
-            <div class="panel-section-title">
-              <span class="status-dot"></span> アラート通知
+        <!-- Home Tabs -->
+        <div class="home-tabs">
+          <button class="home-tab active" data-tab="alert" onclick="switchHomeTab('alert')">🔔 アラート</button>
+          <button class="home-tab" data-tab="comment" onclick="switchHomeTab('comment')">💬 定期コメント</button>
+          <button class="home-tab" data-tab="common" onclick="switchHomeTab('common')">⚙ 共通設定</button>
+        </div>
+
+        <!-- Tab: アラート -->
+        <div id="home-tab-alert" class="home-tab-content active panel-section">
+          <div class="alert-list">
+            <div class="alert-row">
+              <div id="home-follow" class="toggle on" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">フォロー通知</div>
+              <button class="alert-test-btn" onclick="testAlert('follow')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openAlertModal('follow')">設定 ⚙</button>
             </div>
-            <div class="alert-list">
-              <div class="alert-row">
-                <div id="home-follow" class="toggle on" onclick="toggleAlert(this)"></div>
-                <div class="alert-name">フォロー通知</div>
-                <button class="alert-test-btn" onclick="testAlert('follow')" title="テスト発火">▶</button>
-                <button class="alert-settings-btn" onclick="openAlertModal('follow')">設定 ⚙</button>
-              </div>
-              <div class="alert-row">
-                <div id="home-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
-                <div class="alert-name">サブスク通知</div>
-                <button class="alert-test-btn" onclick="testAlert('subscribe')" title="テスト発火">▶</button>
-                <button class="alert-settings-btn" onclick="openAlertModal('subscribe')">設定 ⚙</button>
-              </div>
-              <div class="alert-row">
-                <div id="home-raid" class="toggle" onclick="toggleAlert(this)"></div>
-                <div class="alert-name">レイド通知</div>
-                <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
-                <button class="alert-settings-btn" onclick="openAlertModal('raid')">設定 ⚙</button>
-              </div>
-              <div class="alert-row">
-                <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
-                <div class="alert-name">ビッツ通知</div>
-                <button class="alert-test-btn" onclick="testAlert('bits')" title="テスト発火">▶</button>
-                <button class="alert-settings-btn" onclick="openAlertModal('bits')">設定 ⚙</button>
-              </div>
-              <div class="alert-row">
-                <div id="home-points" class="toggle" onclick="toggleAlert(this)"></div>
-                <div class="alert-name">チャンネルポイント</div>
-                <button class="alert-test-btn" onclick="testAlert('channelPoints')" title="テスト発火">▶</button>
-                <button class="alert-settings-btn" onclick="openAlertModal('channelPoints')">設定 ⚙</button>
-              </div>
+            <div class="alert-row">
+              <div id="home-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">サブスク通知</div>
+              <button class="alert-test-btn" onclick="testAlert('subscribe')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openAlertModal('subscribe')">設定 ⚙</button>
             </div>
-            <div class="url-box">
-              <span class="url-text">localhost:3001/overlay</span>
-              <button class="copy-btn" onclick="copyOverlayUrl()">コピー</button>
+            <div class="alert-row">
+              <div id="home-raid" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">レイド通知</div>
+              <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openAlertModal('raid')">設定 ⚙</button>
+            </div>
+            <div class="alert-row">
+              <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">ビッツ通知</div>
+              <button class="alert-test-btn" onclick="testAlert('bits')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openAlertModal('bits')">設定 ⚙</button>
+            </div>
+            <div class="alert-row">
+              <div id="home-points" class="toggle" onclick="toggleAlert(this)"></div>
+              <div class="alert-name">チャンネルポイント</div>
+              <button class="alert-test-btn" onclick="testAlert('channelPoints')" title="テスト発火">▶</button>
+              <button class="alert-settings-btn" onclick="openAlertModal('channelPoints')">設定 ⚙</button>
             </div>
           </div>
-
-          <!-- Periodic Comment Section -->
-          <div class="panel-section">
-            <div class="panel-section-title">
-              <span class="status-dot"></span> 定期コメント
-            </div>
-            <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
-              <span style="font-size:13px;">投稿間隔：</span>
-              <input type="number" id="interval-input" class="input" value="30" min="1" max="120" style="width:60px; padding:8px;">
-              <span style="font-size:13px;">分</span>
-            </div>
-            <div id="home-comment-list">
-              <div class="comment-row">
-                <input type="text" class="input" placeholder="メッセージを入力...">
-                <button class="delete-btn" onclick="removeComment(this)">×</button>
-              </div>
-              <div class="comment-row">
-                <input type="text" class="input" placeholder="メッセージを入力...">
-                <button class="delete-btn" onclick="removeComment(this)">×</button>
-              </div>
-              <div class="comment-row">
-                <input type="text" class="input" placeholder="メッセージを入力...">
-                <button class="delete-btn" onclick="removeComment(this)">×</button>
-              </div>
-            </div>
-            <button class="add-btn" onclick="addComment('home-comment-list')">＋ コメントを追加</button>
+          <div class="url-box" style="margin-top:16px;">
+            <span class="url-text">localhost:3001/overlay</span>
+            <button class="copy-btn" onclick="copyOverlayUrl()">コピー</button>
           </div>
         </div>
 
-        <div style="margin-top:24px; display:flex; justify-content:flex-end;">
+        <!-- Tab: 定期コメント -->
+        <div id="home-tab-comment" class="home-tab-content panel-section" style="display:none;">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+            <span style="font-size:13px;">投稿間隔：</span>
+            <input type="number" id="interval-input" class="input" value="30" min="1" max="120" style="width:60px; padding:8px;">
+            <span style="font-size:13px;">分</span>
+          </div>
+          <div id="home-comment-list">
+            <div class="comment-row">
+              <input type="text" class="input" placeholder="メッセージを入力...">
+              <button class="delete-btn" onclick="removeComment(this)">×</button>
+            </div>
+            <div class="comment-row">
+              <input type="text" class="input" placeholder="メッセージを入力...">
+              <button class="delete-btn" onclick="removeComment(this)">×</button>
+            </div>
+            <div class="comment-row">
+              <input type="text" class="input" placeholder="メッセージを入力...">
+              <button class="delete-btn" onclick="removeComment(this)">×</button>
+            </div>
+          </div>
+          <button class="add-btn" style="margin-top:8px;" onclick="addComment('home-comment-list')">＋ コメントを追加</button>
+        </div>
+
+        <!-- Tab: 共通設定 -->
+        <div id="home-tab-common" class="home-tab-content panel-section" style="display:none;">
+
+          <!-- オーバーレイ表示位置 -->
+          <div class="common-section">
+            <div class="common-label">オーバーレイ表示位置</div>
+            <div class="position-grid">
+              <button class="pos-btn" data-pos="top-left"      onclick="setPosition(this)" title="左上">↖</button>
+              <button class="pos-btn" data-pos="top-center"    onclick="setPosition(this)" title="上中央">↑</button>
+              <button class="pos-btn" data-pos="top-right"     onclick="setPosition(this)" title="右上">↗</button>
+              <button class="pos-btn" data-pos="middle-left"   onclick="setPosition(this)" title="左中央">←</button>
+              <button class="pos-btn" data-pos="center"        onclick="setPosition(this)" title="中央">●</button>
+              <button class="pos-btn" data-pos="middle-right"  onclick="setPosition(this)" title="右中央">→</button>
+              <button class="pos-btn" data-pos="bottom-left"   onclick="setPosition(this)" title="左下">↙</button>
+              <button class="pos-btn active" data-pos="bottom-center" onclick="setPosition(this)" title="下中央">↓</button>
+              <button class="pos-btn" data-pos="bottom-right"  onclick="setPosition(this)" title="右下">↘</button>
+            </div>
+          </div>
+
+          <!-- アラート表示時間 -->
+          <div class="common-section">
+            <div class="common-label">アラート表示時間</div>
+            <div class="volume-row">
+              <span style="font-size:13px;">3秒</span>
+              <input type="range" id="duration-slider" min="3" max="10" value="5" oninput="onDurationChange(this.value)">
+              <span style="font-size:13px;">10秒</span>
+              <span id="duration-display" class="volume-value">5秒</span>
+            </div>
+          </div>
+
+          <!-- フォント -->
+          <div class="common-section">
+            <div class="common-label">フォント</div>
+            <select id="font-select" class="input" style="width:auto;">
+              <option value="'Yu Gothic UI', 'Yu Gothic', sans-serif">Yu Gothic UI</option>
+              <option value="Meiryo, sans-serif">Meiryo（メイリオ）</option>
+              <option value="'BIZ UDGothic', sans-serif">BIZ UDゴシック</option>
+              <option value="'MS PGothic', sans-serif">MS Pゴシック</option>
+              <option value="'Segoe UI', sans-serif">Segoe UI</option>
+            </select>
+          </div>
+
+          <!-- フォントサイズ -->
+          <div class="common-section">
+            <div class="common-label">フォントサイズ</div>
+            <div class="volume-row">
+              <span style="font-size:13px;">12px</span>
+              <input type="range" id="fontsize-slider" min="12" max="32" value="18" oninput="onFontsizeChange(this.value)">
+              <span style="font-size:13px;">32px</span>
+              <span id="fontsize-display" class="volume-value">18px</span>
+            </div>
+          </div>
+
+          <div style="display:flex; justify-content:flex-end; margin-top:8px;">
+            <button class="btn btn-primary" onclick="saveCommonSettings()">保存</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px; display:flex; justify-content:flex-end;">
           <button class="btn btn-secondary" style="color:#ff4444;" onclick="confirmReset()">
             かんたん設定をやり直す
           </button>

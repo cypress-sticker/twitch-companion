@@ -546,3 +546,65 @@ body:not(.light-mode) .anim-btn.active .anim-icon { filter: invert(1); opacity: 
 
 /* Variable hint */
 .var-hint { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
+/* ───── Home Tabs ───── */
+.home-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 2px solid var(--border);
+  margin-bottom: 0;
+}
+.home-tab {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-muted);
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  border-radius: 6px 6px 0 0;
+}
+.home-tab:hover { color: var(--text-primary); background: var(--bg-hover); }
+.home-tab.active { color: var(--accent); border-bottom-color: var(--accent); background: transparent; }
+.home-tab-content { padding: 20px; border-radius: 0 12px 12px 12px; }
+
+/* ───── Common Settings ───── */
+.common-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+.common-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Position Grid */
+.position-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  gap: 6px;
+}
+.pos-btn {
+  width: 44px;
+  height: 44px;
+  background: var(--bg-input);
+  border: 1px solid var(--border-sub);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+.pos-btn:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--text-primary); }
+.pos-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }

@@ -477,19 +477,34 @@ body {
 .size-btn.active, .size-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
 
 /* Animation Selector */
-.anim-selector { display: flex; flex-direction: column; gap: 6px; }
+.anim-selector { display: flex; flex-direction: row; gap: 6px; flex-wrap: wrap; }
 .anim-btn {
   background: var(--bg-input);
   border: 1px solid var(--border-sub);
-  color: var(--text-muted);
-  padding: 8px 12px;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  font-size: 12px;
-  width: 100%;
-  text-align: center;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px;
+  transition: all 0.15s;
 }
-.anim-btn.active, .anim-btn:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.anim-btn:hover { background: var(--bg-hover); border-color: var(--accent); }
+.anim-btn.active { background: var(--accent); border-color: var(--accent); }
+.anim-icon {
+  width: 28px;
+  height: 28px;
+  opacity: 0.55;
+  transition: opacity 0.15s;
+}
+.anim-btn:hover .anim-icon { opacity: 0.9; }
+.anim-btn.active .anim-icon { opacity: 1; filter: invert(1); }
+/* ダークモードでは黒アイコンを白反転 */
+body:not(.light-mode) .anim-icon { filter: invert(1); opacity: 0.6; }
+body:not(.light-mode) .anim-btn:hover .anim-icon { opacity: 1; }
+body:not(.light-mode) .anim-btn.active .anim-icon { filter: invert(1); opacity: 1; }
 
 /* Radio */
 .radio-row { display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }

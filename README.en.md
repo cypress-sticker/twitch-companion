@@ -3,8 +3,8 @@
 **The all-in-one companion app for Twitch streamers**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/cypress_sticker/twitch-companion/releases)
-[![Version](https://img.shields.io/badge/Version-0.1.1-green.svg)](https://github.com/cypress_sticker/twitch-companion/releases)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/tky1192tky/twitch-companion/releases)
+[![Version](https://img.shields.io/badge/Version-0.1.1-green.svg)](https://github.com/tky1192tky/twitch-companion/releases)
 
 [日本語 README](README.md)
 
@@ -41,7 +41,7 @@ Just add `http://localhost:3001/overlay` as a browser source in OBS. No extra se
 
 ## Download
 
-Grab the latest `.exe` or `.zip` from [Releases](https://github.com/cypress_sticker/twitch-companion/releases).
+Grab the latest `.exe` or `.zip` from [Releases](https://github.com/tky1192tky/twitch-companion/releases).
 
 > **About the Windows warning on first launch**  
 > Windows may show a "Windows protected your PC" dialog. Click "More info" → "Run anyway" to proceed. This appears because the app is not code-signed — it is not a virus.
@@ -66,7 +66,7 @@ Grab the latest `.exe` or `.zip` from [Releases](https://github.com/cypress_stic
 ### Steps
 
 ```bash
-git clone https://github.com/cypress_sticker/twitch-companion.git
+git clone https://github.com/tky1192tky/twitch-companion.git
 cd twitch-companion
 npm install
 ```

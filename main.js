@@ -1,4 +1,5 @@
 // main.js
+require('dotenv').config();
 const { app, BrowserWindow, ipcMain, dialog, Menu, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
@@ -9,15 +10,44 @@ const { loadSettings, saveSettings, exportSettings, importSettings, resetSetting
 const { startOAuthFlow, validateToken, getUserInfo } = require('./src/auth/oauth');
 
 let mainWindow = null;
+let splashWindow = null;
 let alertServer = null;
 let botServer = null;
 let settings = null;
 
+function createSplashWindow() {
+  splashWindow = new BrowserWindow({
+    width: 400,
+    height: 300,
+    frame: false,
+    transparent: true,
+    alwaysOnTop: true,
+    resizable: false,
+    center: true,
+    skipTaskbar: true,
+    webPreferences: { contextIsolation: true },
+  });
+  splashWindow.loadFile(path.join(__dirname, 'renderer', 'splash.html'), {
+    query: { v: app.getVersion() },
+  });
+}
+
+function closeSplash() {
+  if (splashWindow && !splashWindow.isDestroyed()) {
+    splashWindow.close();
+    splashWindow = null;
+  }
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.show();
+  }
+}
+
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 800,
+    width: 500,
     height: 720,
-    title: 'Twitch Companion',
+    title: 'コアたん',
+    show: false,
     autoHideMenuBar: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -32,22 +62,29 @@ function createWindow() {
   mainWindow.webContents.on('did-finish-load', async () => {
     settings = loadSettings();
 
-    if (settings.auth.accessToken) {
-      const valid = await validateToken(settings.auth.accessToken);
-      if (valid) {
-        mainWindow.webContents.send(IPC.AUTH_STATUS, {
-          authenticated: true,
-          username: settings.auth.broadcasterName,
-        });
-        startServers();
-      } else {
-        settings.auth = { accessToken: '', refreshToken: '', broadcasterId: '', broadcasterName: '' };
-        saveSettings(settings);
-        mainWindow.webContents.send(IPC.AUTH_STATUS, { authenticated: false });
-      }
-    } else {
-      mainWindow.webContents.send(IPC.AUTH_STATUS, { authenticated: false });
-    }
+    const [authResult] = await Promise.all([
+      (async () => {
+        if (settings.auth.accessToken) {
+          const valid = await validateToken(settings.auth.accessToken);
+          if (valid) {
+            mainWindow.webContents.send(IPC.AUTH_STATUS, {
+              authenticated: true,
+              username: settings.auth.broadcasterName,
+            });
+            startServers();
+          } else {
+            settings.auth = { accessToken: '', refreshToken: '', broadcasterId: '', broadcasterName: '' };
+            saveSettings(settings);
+            mainWindow.webContents.send(IPC.AUTH_STATUS, { authenticated: false });
+          }
+        } else {
+          mainWindow.webContents.send(IPC.AUTH_STATUS, { authenticated: false });
+        }
+      })(),
+      new Promise(resolve => setTimeout(resolve, 3000)),
+    ]);
+
+    closeSplash();
   });
 }
 
@@ -55,7 +92,46 @@ function createMenu() {
   const template = [
     {
       label: 'ファイル',
-      submenu: [{ label: '終了', accelerator: 'Alt+F4', click: () => app.quit() }],
+      submenu: [
+        {
+          label: '設定をエクスポート',
+          click: async () => {
+            const result = await dialog.showSaveDialog(mainWindow, {
+              title: '設定をエクスポート',
+              defaultPath: 'twitch-companion-settings.json',
+              filters: [{ name: 'JSON', extensions: ['json'] }],
+            });
+            if (!result.canceled) {
+              const success = exportSettings(result.filePath, settings);
+              if (success) dialog.showMessageBox(mainWindow, { type: 'info', title: '完了', message: '設定をエクスポートしました' });
+            }
+          },
+        },
+        {
+          label: '設定をインポート',
+          click: async () => {
+            const result = await dialog.showOpenDialog(mainWindow, {
+              title: '設定をインポート',
+              filters: [{ name: 'JSON', extensions: ['json'] }],
+              properties: ['openFile'],
+            });
+            if (!result.canceled) {
+              const imported = importSettings(result.filePaths[0]);
+              if (imported) {
+                settings = { ...settings, ...imported };
+                saveSettings(settings);
+                if (alertServer) alertServer.send({ type: 'update-settings', settings });
+                if (botServer) botServer.send({ type: 'update-settings', settings });
+                mainWindow.webContents.reload();
+              } else {
+                dialog.showMessageBox(mainWindow, { type: 'error', title: 'エラー', message: 'インポートに失敗しました' });
+              }
+            }
+          },
+        },
+        { type: 'separator' },
+        { label: '終了', accelerator: 'Alt+F4', click: () => app.quit() },
+      ],
     },
     {
       label: 'ヘルプ',
@@ -65,8 +141,8 @@ function createMenu() {
         { label: 'バージョン情報', click: () => dialog.showMessageBox(mainWindow, {
           type: 'info',
           title: 'バージョン情報',
-          message: 'Twitch Companion',
-          detail: `バージョン: ${app.getVersion()}\n\nTwitch配信者向けアラート＆定期コメントツール`,
+          message: 'コアたん',
+          detail: `バージョン: ${app.getVersion()}\n\n配信をまるっと支える総合アプリ`,
         }) },
       ],
     },
@@ -232,10 +308,38 @@ ipcMain.handle(IPC.SETTINGS_RESET, () => {
   return settings;
 });
 
+ipcMain.handle(IPC.PREVIEW_PERIODIC, (e, messages) => {
+  if (!botServer) return { ok: false, error: 'Bot not running' };
+  messages.forEach((msg, i) => {
+    setTimeout(() => {
+      botServer?.send({ type: 'send-message', message: msg });
+    }, i * 1500);
+  });
+  return { ok: true };
+});
+
+ipcMain.handle(IPC.CONFIRM_RESET, async () => {
+  const { response } = await dialog.showMessageBox(mainWindow, {
+    type: 'question',
+    buttons: ['やり直す', 'キャンセル'],
+    defaultId: 0,
+    cancelId: 1,
+    title: 'かんたん設定をやり直す',
+    message: 'かんたん設定をやり直しますか？',
+    detail: '保存されていない設定がリセットされます。',
+  });
+  mainWindow.focus();
+  return response === 0;
+});
+
 ipcMain.on(IPC.ALERT_START, () => startAlertServer());
 ipcMain.on(IPC.ALERT_STOP, () => stopAlertServer());
 ipcMain.handle(IPC.ALERT_TEST, (event, key) => {
   if (alertServer) alertServer.send({ type: 'test-alert', key });
+  return true;
+});
+ipcMain.handle(IPC.RAID_CHAT_TEST, () => {
+  if (alertServer) alertServer.send({ type: 'test-raid-chat' });
   return true;
 });
 ipcMain.on(IPC.BOT_START, () => startBotServer());
@@ -296,6 +400,7 @@ if (!gotLock) {
 
 app.whenReady().then(() => {
   createMenu();
+  createSplashWindow();
   createWindow();
 });
 

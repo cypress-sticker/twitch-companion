@@ -17,6 +17,8 @@ let twitchWs = null;
 let overlayClients = [];
 let sessionId = null;
 let tmiClient = null;
+let shouldReconnect = false;
+let isServerReconnect = false;
 
 const EVENTSUB_URL = 'wss://eventsub.wss.twitch.tv/ws';
 
@@ -64,6 +66,9 @@ function getOverlayHtml() {
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&family=Dela+Gothic+One&family=DotGothic16&family=Kaisei+Decol&family=Rampart+One&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { background: transparent; font-family: ${font}; font-size: ${fontSize}px; overflow: hidden; }
@@ -83,9 +88,9 @@ function getOverlayHtml() {
       align-items: center;
       gap: 12px;
     }
-    .alert img.img-sm { width: 32px;  height: 32px;  border-radius: 6px; }
-    .alert img.img-md { width: 48px;  height: 48px;  border-radius: 8px; }
-    .alert img.img-lg { width: 72px;  height: 72px;  border-radius: 10px; }
+    .alert img.img-sm { max-height: 80px;  width: auto; border-radius: 6px; }
+    .alert img.img-md { max-height: 120px; width: auto; border-radius: 8px; }
+    .alert img.img-lg { max-height: 180px; width: auto; border-radius: 10px; }
 
     @keyframes slideUpAnim   { from { transform: translateY(100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     @keyframes slideDownAnim { from { transform: translateY(-100px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
@@ -97,10 +102,31 @@ function getOverlayHtml() {
 </head>
 <body>
   <div id="alert-container"></div>
-  <audio id="chime" src="/sounds/chime.mp3"></audio>
+  <div id="audio-unlock-btn" onclick="unlockAudio()" style="position:fixed;bottom:8px;left:8px;background:rgba(145,71,255,0.85);color:#fff;font-size:11px;padding:5px 10px;border-radius:6px;cursor:pointer;z-index:9999;user-select:none;display:none;">
+    🔊 クリックして音声を有効化
+  </div>
   <script>
     const container = document.getElementById('alert-container');
-    const chime = document.getElementById('chime');
+
+    function unlockAudio() {
+      const a = new Audio('/sounds/chime.mp3');
+      a.volume = 0;
+      a.play().then(() => { a.pause(); }).catch(() => {});
+      const btn = document.getElementById('audio-unlock-btn');
+      if (btn) btn.remove();
+    }
+
+    // OBS/CEF では自動再生可能。ブラウザで blocked なら解除ボタンを表示
+    window.addEventListener('load', () => {
+      const test = new Audio('/sounds/chime.mp3');
+      test.volume = 0;
+      test.play()
+        .then(() => { test.pause(); })
+        .catch(() => {
+          const btn = document.getElementById('audio-unlock-btn');
+          if (btn) btn.style.display = 'block';
+        });
+    });
     let overlaySettings = {
       displayDuration: ${dur},
       position: '${ov.position || 'bottom-center'}',
@@ -172,14 +198,11 @@ function getOverlayHtml() {
       container.appendChild(div);
 
       if (data.soundType !== 'none') {
-        let audio;
-        if (data.soundType === 'custom' && data.soundFile) {
-          audio = new Audio('/custom/' + data.soundFile);
-        } else {
-          audio = chime;
-        }
+        const src = (data.soundType === 'custom' && data.soundFile)
+          ? '/custom/' + data.soundFile
+          : '/sounds/chime.mp3';
+        const audio = new Audio(src);
         audio.volume = Math.max(0, Math.min(1, (data.volume ?? 70) / 100));
-        audio.currentTime = 0;
         audio.play().catch(() => {});
       }
 
@@ -459,6 +482,7 @@ function connectToEventSub() {
 
     if (msg.metadata.message_type === 'session_reconnect') {
       log('Reconnecting to EventSub...');
+      isServerReconnect = true;
       twitchWs.close();
       connectToEventSub();
     }
@@ -467,6 +491,16 @@ function connectToEventSub() {
   twitchWs.on('close', () => {
     log('Disconnected from EventSub');
     sendStatus('disconnected');
+    if (isServerReconnect) {
+      isServerReconnect = false;
+      return;
+    }
+    if (shouldReconnect) {
+      log('Reconnecting to EventSub in 5 seconds...');
+      setTimeout(() => {
+        if (shouldReconnect) connectToEventSub();
+      }, 5000);
+    }
   });
 
   twitchWs.on('error', (err) => {
@@ -479,12 +513,14 @@ function start(config) {
   broadcasterId = config.broadcasterId;
   broadcasterName = config.broadcasterName;
   settings = config.settings;
+  shouldReconnect = true;
 
   startHttpServer(settings.overlay.port);
   connectToEventSub();
 }
 
 function stop() {
+  shouldReconnect = false;
   if (twitchWs) {
     twitchWs.close();
     twitchWs = null;
@@ -560,6 +596,17 @@ process.on('message', (msg) => {
     broadcastToOverlay({ type: 'settings-update', overlay: settings.overlay });
   } else if (msg.type === 'test-alert') {
     handleTestAlert(msg.key);
+  } else if (msg.type === 'test-raid-chat') {
+    if (settings?.raidChat?.enabled) {
+      sendRaidChat(
+        settings.raidChat.messageTemplate,
+        FAKE_EVENTS.raid,
+        FAKE_CHANNEL_INFO,
+        FAKE_USER_PROFILE,
+        settings.raidChat.shoutout,
+      );
+    }
+    log('Test raid chat fired');
   }
 });
 

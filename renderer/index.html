@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Twitch Companion</title>
+  <title>コアたん</title>
   <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=M+PLUS+Rounded+1c:wght@400;700&family=Dela+Gothic+One&family=DotGothic16&family=Kaisei+Decol&family=Rampart+One&display=swap" rel="stylesheet">
 </head>
 <body>
   <!-- Navigation -->
@@ -153,8 +156,9 @@
   <div id="screen-home" class="screen">
     <div class="main-content">
       <div id="home-content">
-        <div style="margin-bottom:16px;">
-          <h1 style="font-size:24px;">ホーム <span id="username" style="font-size:16px; font-weight:400; color:var(--text-muted);"></span></h1>
+        <div style="margin-bottom:16px; display:flex; align-items:center; gap:10px;">
+          <img src="../assets/home-logo.png" alt="コアたん" class="home-logo" style="height:36px; width:auto;">
+          <span id="username" style="font-size:14px; font-weight:400; color:var(--text-muted);"></span>
         </div>
 
         <!-- Home Tabs -->
@@ -170,37 +174,37 @@
             <div class="alert-row">
               <div id="home-follow" class="toggle on" onclick="toggleAlert(this)"></div>
               <div class="alert-name">フォロー通知</div>
-              <button class="alert-test-btn" onclick="testAlert('follow')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testAlert('follow')" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('follow')">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-subscribe" class="toggle on" onclick="toggleAlert(this)"></div>
               <div class="alert-name">サブスク通知</div>
-              <button class="alert-test-btn" onclick="testAlert('subscribe')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testAlert('subscribe')" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('subscribe')">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-raid" class="toggle" onclick="toggleAlert(this)"></div>
               <div class="alert-name">レイド通知</div>
-              <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testAlert('raid')" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('raid')">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-raid-chat" class="toggle" onclick="toggleAlert(this)"></div>
               <div class="alert-name">レイドお礼チャット</div>
-              <button class="alert-test-btn" onclick="testAlert('raid')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testRaidChat()" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openRaidChatModal()">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-bits" class="toggle" onclick="toggleAlert(this)"></div>
               <div class="alert-name">ビッツ通知</div>
-              <button class="alert-test-btn" onclick="testAlert('bits')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testAlert('bits')" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('bits')">設定 ⚙</button>
             </div>
             <div class="alert-row">
               <div id="home-points" class="toggle" onclick="toggleAlert(this)"></div>
               <div class="alert-name">チャンネルポイント</div>
-              <button class="alert-test-btn" onclick="testAlert('channelPoints')" title="テスト発火">▶</button>
+              <button class="alert-test-btn" onclick="testAlert('channelPoints')" title="プレビュー">▶</button>
               <button class="alert-settings-btn" onclick="openAlertModal('channelPoints')">設定 ⚙</button>
             </div>
           </div>
@@ -232,7 +236,9 @@
             </div>
           </div>
           <button class="add-btn" style="margin-top:8px;" onclick="addComment('home-comment-list')">＋ コメントを追加</button>
-          <div style="display:flex; justify-content:flex-end; margin-top:16px;">
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; margin-top:16px;">
+            <span id="periodic-save-msg" style="font-size:11px; color:var(--success); display:none;">✓ 保存しました</span>
+            <button id="periodic-preview-btn" class="btn btn-secondary" onclick="previewPeriodicComments()" style="font-size:13px;">▶ プレビュー</button>
             <button class="btn btn-primary" onclick="savePeriodicComments()">保存</button>
           </div>
         </div>
@@ -258,15 +264,25 @@
                 <button class="pos-btn active" data-pos="bottom-center" onclick="setPosition(this)" title="下中央">↓</button>
                 <button class="pos-btn" data-pos="bottom-right"  onclick="setPosition(this)" title="右下">↘</button>
               </div>
-              <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-                <div class="mini-monitor">
-                  <div class="mini-monitor-screen">
-                    <div id="mini-monitor-dot" class="mini-monitor-dot"></div>
+              <div style="flex:1; display:flex; align-items:center; justify-content:center; gap:12px;">
+                <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+                  <div class="mini-monitor">
+                    <div class="mini-monitor-screen">
+                      <div id="mini-monitor-dot" class="mini-monitor-dot"></div>
+                    </div>
+                    <div class="mini-monitor-stand"></div>
                   </div>
-                  <div class="mini-monitor-stand"></div>
+                  <span id="common-save-msg" style="font-size:11px; color:var(--success); display:none; white-space:nowrap;">✓ 保存しました</span>
+                  <button id="common-save-btn" class="btn btn-primary" onclick="saveCommonSettings()" disabled style="font-size:12px; padding:6px 20px;">保存</button>
                 </div>
-                <span id="common-save-msg" style="font-size:11px; color:var(--success); display:none; white-space:nowrap;">✓ 保存しました</span>
-                <button id="common-save-btn" class="btn btn-primary" onclick="saveCommonSettings()" disabled style="font-size:12px; padding:6px 16px; width:100%;">保存</button>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <div style="font-size:10px; color:var(--text-dim); text-align:center; margin-bottom:2px;">プレビュー</div>
+                  <button class="preview-btn" onclick="testAlert('follow')" title="プレビュー">▶ フォロー</button>
+                  <button class="preview-btn" onclick="testAlert('subscribe')" title="プレビュー">▶ サブスク</button>
+                  <button class="preview-btn" onclick="testAlert('raid')" title="プレビュー">▶ レイド</button>
+                  <button class="preview-btn" onclick="testAlert('bits')" title="プレビュー">▶ ビッツ</button>
+                  <button class="preview-btn" onclick="testAlert('channelPoints')" title="プレビュー">▶ ポイント</button>
+                </div>
               </div>
             </div>
           </div>
@@ -286,11 +302,13 @@
           <div class="common-section">
             <div class="common-label">フォント</div>
             <select id="font-select" class="input" style="width:auto;" onchange="updateFontPreview()">
-              <option value="'Yu Gothic UI', 'Yu Gothic', sans-serif">Yu Gothic UI</option>
-              <option value="Meiryo, sans-serif">Meiryo（メイリオ）</option>
-              <option value="'BIZ UDGothic', sans-serif">BIZ UDゴシック</option>
-              <option value="'MS PGothic', sans-serif">MS Pゴシック</option>
-              <option value="'Segoe UI', sans-serif">Segoe UI</option>
+              <option value="'Yu Gothic UI', 'Yu Gothic', sans-serif">Yu Gothic UI（システム）</option>
+              <option value="'Noto Sans JP', sans-serif">Noto Sans JP（モダン）</option>
+              <option value="'M PLUS Rounded 1c', sans-serif">M PLUS Rounded 1c（丸ゴシック）</option>
+              <option value="'Dela Gothic One', sans-serif">Dela Gothic One（太字・インパクト）</option>
+              <option value="'DotGothic16', sans-serif">DotGothic16（ドット絵風）</option>
+              <option value="'Kaisei Decol', serif">Kaisei Decol（明朝系）</option>
+              <option value="'Rampart One', sans-serif">Rampart One（アウトライン）</option>
             </select>
           </div>
 
@@ -303,7 +321,13 @@
               <span style="font-size:13px;">32px</span>
               <span id="fontsize-display" class="volume-value">18px</span>
             </div>
-            <div id="font-preview" class="font-preview">🎉 cypress_sticker さんがフォローしました！</div>
+            <div id="font-preview" class="font-preview">🎉 テストユーザー さんがフォローしました！</div>
+          </div>
+
+          <!-- 共通設定 下部保存ボタン -->
+          <div style="display:flex; justify-content:flex-end; align-items:center; gap:12px; padding-top:4px;">
+            <span id="common-save-msg-bottom" style="font-size:11px; color:var(--success); display:none;">✓ 保存しました</span>
+            <button class="btn btn-primary" onclick="saveCommonSettingsBottom()" style="font-size:13px; padding:8px 24px;">保存</button>
           </div>
 
         </div>
@@ -396,8 +420,10 @@
         <!-- メッセージ -->
         <div class="modal-section">
           <div class="modal-section-label">メッセージ</div>
-          <input type="text" id="modal-message" class="input" oninput="updateModalPreview()">
-          <div class="var-hint">{user} = ユーザー名　{viewers} = 人数（レイド用）　{amount} = ビッツ数</div>
+          <div id="modal-var-btns" class="chip-insert-row"></div>
+          <div id="modal-message-editor" class="chip-editor" contenteditable="true" spellcheck="false"
+               onclick="onAlertChipEditorClick(event)" oninput="updateModalPreview()"></div>
+          <div class="var-hint">タグをクリックすると削除できます</div>
         </div>
 
       </div>
@@ -407,7 +433,7 @@
         <div class="modal-preview-area">
           <div id="modal-preview" class="alert-preview">
             <img id="preview-img" class="img-md" style="display:none;" alt="">
-            <span id="preview-text">🎉 cypress_sticker さんがフォローしました！</span>
+            <span id="preview-text">🎉 テストユーザー さんがフォローしました！</span>
           </div>
           <button class="btn btn-secondary" onclick="previewAlertAnimation()" style="font-size:12px; padding:10px 20px; line-height:1.4;">▶ アニメーション確認</button>
         </div>
@@ -446,14 +472,14 @@
             <button class="chip-insert-btn" onmousedown="event.preventDefault()" onclick="insertChipToEditor('profile', 'プロフィール')">＋ プロフィール</button>
           </div>
           <div id="raid-chat-editor" class="chip-editor" contenteditable="true" spellcheck="false" onclick="onChipEditorClick(event)"></div>
-          <div class="var-hint">チップをクリックすると削除できます</div>
+          <div class="var-hint">タグをクリックすると削除できます</div>
         </div>
 
         <!-- シャウトアウト -->
         <div class="modal-section">
           <label class="radio-label" style="gap:10px; cursor:pointer;">
             <input type="checkbox" id="raid-chat-shoutout">
-            <span>シャウトアウトを送る（<code>/shoutout</code> コマンド）</span>
+            <span>応援を送る（<code>/shoutout</code> コマンド）</span>
           </label>
         </div>
 

@@ -25,6 +25,8 @@ contextBridge.exposeInMainWorld('api', {
   exportSettings: () => ipcRenderer.invoke(IPC.SETTINGS_EXPORT),
   importSettings: () => ipcRenderer.invoke(IPC.SETTINGS_IMPORT),
   resetSettings: () => ipcRenderer.invoke(IPC.SETTINGS_RESET),
+  confirmReset: () => ipcRenderer.invoke(IPC.CONFIRM_RESET),
+  previewPeriodicComments: (messages) => ipcRenderer.invoke(IPC.PREVIEW_PERIODIC, messages),
 
   // Alert Server
   startAlertServer: () => ipcRenderer.send(IPC.ALERT_START),
@@ -51,6 +53,7 @@ contextBridge.exposeInMainWorld('api', {
   selectAlertImage: () => ipcRenderer.invoke(IPC.ALERT_SELECT_IMAGE),
   selectAlertSound: () => ipcRenderer.invoke(IPC.ALERT_SELECT_SOUND),
   testAlert: (key) => ipcRenderer.invoke(IPC.ALERT_TEST, key),
+  testRaidChat: () => ipcRenderer.invoke(IPC.RAID_CHAT_TEST),
   onShowAlert: (cb) => {
     ipcRenderer.removeAllListeners(IPC.OVERLAY_SHOW_ALERT);
     ipcRenderer.on(IPC.OVERLAY_SHOW_ALERT, (e, data) => cb(data));

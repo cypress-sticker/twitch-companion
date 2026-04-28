@@ -87,6 +87,10 @@ body {
 }
 .theme-btn:hover { border-color: var(--accent); color: var(--accent); }
 
+/* Screen switching */
+.screen { display: none; }
+.screen.active { display: block; }
+
 /* Main Content */
 .main-content {
   padding: 70px 24px 24px;
@@ -105,7 +109,7 @@ body {
 /* Stepper */
 .stepper {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 32px;
 }
 .step {
@@ -149,7 +153,7 @@ body {
   flex: 1;
   height: 2px;
   background: var(--border-sub);
-  margin: 0 -8px;
+  margin: 15px -8px 0;
 }
 .step-line.done { background: var(--success); }
 
@@ -276,6 +280,8 @@ body {
   font-size: 13px;
 }
 .add-btn:hover { border-color: var(--accent); color: var(--accent); }
+.add-btn:disabled { opacity: 0.35; cursor: not-allowed; }
+.add-btn:disabled:hover { border-color: var(--border-sub); color: var(--text-muted); }
 
 /* URL Box */
 .url-box {
@@ -656,6 +662,20 @@ body:not(.light-mode) .tab-icon { filter: invert(1); }
 .pos-btn:hover { background: var(--bg-hover); border-color: var(--accent); color: var(--text-primary); }
 .pos-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
+/* Preview Buttons (common settings) */
+.preview-btn {
+  background: transparent;
+  border: 1px solid var(--border-sub);
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+.preview-btn:hover { background: var(--success); color: #fff; border-color: var(--success); }
+
 /* Mini Monitor Preview */
 .mini-monitor {
   display: flex;
@@ -747,6 +767,7 @@ body:not(.light-mode) .tab-icon { filter: invert(1); }
   padding: 10px 12px;
   font-size: 14px;
   color: var(--text-primary);
+  caret-color: var(--text-primary);
   line-height: 1.8;
   outline: none;
   word-break: break-all;
@@ -772,4 +793,12 @@ body:not(.light-mode) .tab-icon { filter: invert(1); }
 }
 .chip-token:hover {
   opacity: 0.75;
+}
+
+/* ───── Home Logo ───── */
+.home-logo {
+  filter: drop-shadow(0 0 4px rgba(255, 255, 255, 0.55));
+}
+body.light-mode .home-logo {
+  filter: none;
 }

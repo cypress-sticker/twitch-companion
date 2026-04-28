@@ -4,7 +4,6 @@ const tmi = require('tmi.js');
 let client = null;
 let settings = null;
 let broadcasterName = null;
-let messageIndex = 0;
 let intervalTimer = null;
 
 function log(msg) {
@@ -15,20 +14,20 @@ function sendStatus(status) {
   process.send({ type: 'status', status });
 }
 
-function sendNextMessage() {
+function sendAllMessages() {
   if (!settings.periodicComments.enabled) return;
-  if (settings.periodicComments.messages.length === 0) return;
+  const messages = settings.periodicComments.messages.filter(m => m && m.trim());
+  if (messages.length === 0) return;
 
-  const message = settings.periodicComments.messages[messageIndex];
-  if (message && message.trim()) {
-    client.say(broadcasterName, message).then(() => {
-      log(`Sent: ${message}`);
-    }).catch((err) => {
-      log(`Failed to send: ${err.message}`);
-    });
-  }
-
-  messageIndex = (messageIndex + 1) % settings.periodicComments.messages.length;
+  messages.forEach((message, i) => {
+    setTimeout(() => {
+      client.say(broadcasterName, message).then(() => {
+        log(`Sent: ${message}`);
+      }).catch((err) => {
+        log(`Failed to send: ${err.message}`);
+      });
+    }, i * 1000);
+  });
 }
 
 function startInterval() {
@@ -37,7 +36,7 @@ function startInterval() {
   if (settings.periodicComments.messages.length === 0) return;
 
   const intervalMs = settings.periodicComments.intervalMinutes * 60 * 1000;
-  intervalTimer = setInterval(sendNextMessage, intervalMs);
+  intervalTimer = setInterval(sendAllMessages, intervalMs);
   log(`Periodic comments started: every ${settings.periodicComments.intervalMinutes} minutes`);
 }
 

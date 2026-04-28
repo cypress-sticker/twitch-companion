@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      user-select: none;
+      -webkit-app-region: drag;
+    }
+    img {
+      width: 320px;
+      opacity: 0;
+      animation: fadeIn 0.4s ease forwards;
+    }
+    #version {
+      margin-top: 10px;
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.6);
+      font-family: 'Segoe UI', sans-serif;
+      letter-spacing: 0.05em;
+      opacity: 0;
+      animation: fadeIn 0.4s ease 0.2s forwards;
+    }
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <img src="../assets/splash.png" alt="コアたん">
+  <span id="version"></span>
+  <script>
+    const v = new URLSearchParams(location.search).get('v');
+    if (v) document.getElementById('version').textContent = 'v' + v;
+  </script>
+</body>
+</html>

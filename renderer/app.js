@@ -5,7 +5,7 @@ let currentStep = 1;
 let settings = null;
 let authenticated = false;
 
-const MAX_COMMENTS = 10;
+const MAX_COMMENTS = 5;
 
 // ─── Modal Resize ────────────────────────────────────────────────────────────
 
@@ -203,11 +203,16 @@ function syncHomeToWizard() {
     });
   }
   if (homeInterval && wizInterval) wizInterval.value = homeInterval.value;
+  updateAddCommentBtn('wiz-comment-list');
 }
 
-function goToHome() {
+async function goToHome() {
   syncAlertsToHome();
   showScreen('home');
+  await saveSettings();
+  const messages = Array.from(document.querySelectorAll('#home-comment-list .input'))
+    .map(el => el.value).filter(v => v.trim());
+  if (messages.length > 0) window.api.startBotServer();
 }
 
 function renderWizard() {
@@ -314,6 +319,7 @@ function syncAlertsToHome() {
       });
     }
   }
+  updateAddCommentBtn('home-comment-list');
 }
 
 // ─── Home Tabs ───────────────────────────────────────────────────────────────
@@ -440,6 +446,16 @@ function updateFontPreview() {
   markCommonSettingsChanged();
 }
 
+async function saveCommonSettingsBottom() {
+  await saveCommonSettings();
+  const msg = document.getElementById('common-save-msg-bottom');
+  if (msg) {
+    msg.style.display = 'inline';
+    clearTimeout(msg._timer);
+    msg._timer = setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
+}
+
 async function saveCommonSettings() {
   if (!settings) return;
   const activePos = document.querySelector('.pos-btn.active');
@@ -474,6 +490,18 @@ async function testAlert(key) {
   await window.api.testAlert(key);
 }
 
+async function testRaidChat() {
+  await window.api.testRaidChat();
+}
+
+function updateAddCommentBtn(listId) {
+  const list = document.getElementById(listId);
+  if (!list) return;
+  const btn = list.nextElementSibling;
+  if (!btn || !btn.classList.contains('add-btn')) return;
+  btn.disabled = list.children.length >= MAX_COMMENTS;
+}
+
 function addComment(listId) {
   const list = document.getElementById(listId);
   if (list.children.length >= MAX_COMMENTS) return;
@@ -485,10 +513,37 @@ function addComment(listId) {
     <button class="delete-btn" onclick="removeComment(this)">×</button>
   `;
   list.appendChild(row);
+  updateAddCommentBtn(listId);
 }
 
 function removeComment(btn) {
+  const list = btn.parentElement.parentElement;
   btn.parentElement.remove();
+  updateAddCommentBtn(list.id);
+}
+
+async function previewPeriodicComments() {
+  const messages = Array.from(document.querySelectorAll('#home-comment-list .input'))
+    .map(el => el.value.trim()).filter(v => v);
+  if (messages.length === 0) return;
+
+  const btn = document.getElementById('periodic-preview-btn');
+  const totalMs = (messages.length - 1) * 1500 + 2000;
+  btn.disabled = true;
+  btn.textContent = '送信中...';
+
+  const result = await window.api.previewPeriodicComments(messages);
+  if (!result.ok) {
+    alert('Botが起動していません。まず配信サーバーを開始してください。');
+    btn.disabled = false;
+    btn.textContent = '▶ プレビュー';
+    return;
+  }
+
+  setTimeout(() => {
+    btn.disabled = false;
+    btn.textContent = '▶ プレビュー';
+  }, totalMs);
 }
 
 async function savePeriodicComments() {
@@ -499,8 +554,13 @@ async function savePeriodicComments() {
   const newPeriodic = { enabled: true, intervalMinutes, messages };
   settings.periodicComments = newPeriodic;
   await window.api.saveSettings({ periodicComments: newPeriodic });
-  // bot-server が未起動なら起動を依頼
   if (messages.length > 0) window.api.startBotServer();
+
+  const msg = document.getElementById('periodic-save-msg');
+  if (msg) {
+    msg.style.display = 'inline';
+    setTimeout(() => { msg.style.display = 'none'; }, 2000);
+  }
 }
 
 async function saveSettings() {
@@ -553,7 +613,7 @@ async function importSettings() {
 }
 
 async function confirmReset() {
-  if (confirm('かんたん設定をやり直しますか？\n保存されていない設定がリセットされます。')) {
+  if (await window.api.confirmReset()) {
     settings = await window.api.resetSettings();
 
     // トグルをデフォルト状態にリセット（follow/subscribe: ON、それ以外: OFF）
@@ -567,10 +627,18 @@ async function confirmReset() {
     const raidChatEl = document.getElementById('home-raid-chat');
     if (raidChatEl) raidChatEl.classList.remove('on');
 
-    // コメント入力欄をクリア
+    // コメント入力欄をリセット（3行の空欄に戻す）
     ['wiz-comment-list', 'home-comment-list'].forEach(listId => {
       const list = document.getElementById(listId);
-      if (list) list.querySelectorAll('input[type="text"]').forEach(el => el.value = '');
+      if (!list) return;
+      list.innerHTML = '';
+      for (let i = 0; i < 3; i++) {
+        const row = document.createElement('div');
+        row.className = 'comment-row';
+        row.innerHTML = '<input type="text" class="input" placeholder="メッセージを入力..."><button class="delete-btn" onclick="removeComment(this)">×</button>';
+        list.appendChild(row);
+      }
+      updateAddCommentBtn(listId);
     });
 
     // 投稿間隔をデフォルトに戻す
@@ -633,8 +701,21 @@ function openAlertModal(alertKey) {
   // アニメーション
   setModalAnimation(s.animation || 'slide-up');
 
-  // メッセージ
-  document.getElementById('modal-message').value = s.message;
+  // タグ挿入ボタンをアラート種別に応じて生成
+  const row = document.getElementById('modal-var-btns');
+  row.innerHTML = '';
+  (ALERT_CHIP_KEYS[alertKey] || ['user']).forEach(key => {
+    const btn = document.createElement('button');
+    btn.className = 'chip-insert-btn';
+    btn.textContent = '＋ ' + ALERT_CHIP_DEFS[key];
+    btn.setAttribute('onmousedown', 'event.preventDefault()');
+    btn.onclick = () => insertAlertChipToEditor(key);
+    row.appendChild(btn);
+  });
+
+  // メッセージをタグエディタに展開
+  const msgEditor = document.getElementById('modal-message-editor');
+  msgEditor.innerHTML = templateToEditorHtml(s.message, ALERT_CHIP_DEFS);
 
   updateModalPreview();
   centerModal();  // 毎回中央に配置（サイズは前回を引き継ぐ）
@@ -663,9 +744,10 @@ async function saveAlertSettings() {
   const imageName      = imageNameEl.textContent === '選択なし' ? '' : imageNameEl.textContent;
   const soundFile      = soundType === 'custom' ? (soundNameEl.textContent === '選択なし' ? '' : soundNameEl.textContent) : '';
 
+  const msgEditor = document.getElementById('modal-message-editor');
   const updated = {
     enabled:   document.getElementById('modal-enabled-toggle').classList.contains('on'),
-    message:   document.getElementById('modal-message').value,
+    message:   msgEditor ? editorToTemplate(msgEditor) : '',
     soundType,
     soundFile,
     volume:    parseInt(document.getElementById('volume-slider').value),
@@ -686,10 +768,11 @@ async function saveAlertSettings() {
 }
 
 function updateModalPreview() {
-  const msgEl = document.getElementById('modal-message');
-  const message = (msgEl ? msgEl.value : '') || '';
+  const msgEditor = document.getElementById('modal-message-editor');
+  const message = msgEditor ? (editorToTemplate(msgEditor) || '') : '';
+  const previewUser = settings?.auth?.broadcasterName || 'テストユーザー';
   const previewText = message
-    .replace('{user}', 'cypress_sticker')
+    .replace('{user}', previewUser)
     .replace('{viewers}', '10')
     .replace('{amount}', '100');
   document.getElementById('preview-text').textContent = previewText || '（メッセージなし）';
@@ -822,14 +905,30 @@ const CHIP_DEFS = {
   profile: 'プロフィール',
 };
 
-/** テンプレート文字列 → チップHTMLに変換 */
-function templateToEditorHtml(template) {
+const ALERT_CHIP_DEFS = {
+  user:    'ユーザー名',
+  viewers: '人数',
+  amount:  'ビッツ数',
+};
+
+const ALERT_CHIP_KEYS = {
+  follow:        ['user'],
+  subscribe:     ['user'],
+  raid:          ['user', 'viewers'],
+  bits:          ['user', 'amount'],
+  channelPoints: ['user'],
+};
+
+/** テンプレート文字列 → タグHTMLに変換 */
+function templateToEditorHtml(template, chipDefs) {
+  const keys = Object.keys(chipDefs).join('|');
+  const regex = new RegExp(`\\{(${keys})\\}`, 'g');
   const escaped = template
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;');
-  return escaped.replace(/\{(user|viewers|game|title|profile)\}/g, (match, key) => {
-    const label = CHIP_DEFS[key] || key;
+  return escaped.replace(regex, (match, key) => {
+    const label = chipDefs[key] || key;
     return `<span class="chip-token" contenteditable="false" data-key="${key}">${label}</span>`;
   });
 }
@@ -851,23 +950,23 @@ function editorToTemplate(editor) {
   return result;
 }
 
-/** チップ要素を生成 */
-function createChipElement(key) {
+/** タグ要素を生成 */
+function createChipElement(key, label) {
   const chip = document.createElement('span');
   chip.className = 'chip-token';
   chip.contentEditable = 'false';
   chip.dataset.key = key;
-  chip.textContent = CHIP_DEFS[key] || key;
+  chip.textContent = label || key;
   return chip;
 }
 
-/** カーソル位置にチップを挿入 */
+/** カーソル位置にタグを挿入（レイドチャット用） */
 function insertChipToEditor(key) {
   const editor = document.getElementById('raid-chat-editor');
   if (!editor) return;
   editor.focus();
   const sel = window.getSelection();
-  const chip = createChipElement(key);
+  const chip = createChipElement(key, CHIP_DEFS[key]);
   if (!sel || !sel.rangeCount || !editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
     editor.appendChild(chip);
   } else {
@@ -881,13 +980,44 @@ function insertChipToEditor(key) {
   }
 }
 
-/** チップクリック → 削除確認 */
+/** タグクリック → 削除確認（レイドチャット用） */
 function onChipEditorClick(event) {
   const chip = event.target.closest('.chip-token');
   if (!chip) return;
-  if (confirm(`「${chip.textContent}」チップを削除しますか？`)) {
+  if (confirm(`「${chip.textContent}」タグを削除しますか？`)) {
     chip.remove();
   }
+}
+
+/** タグクリック → 削除確認（アラートモーダル用） */
+function onAlertChipEditorClick(event) {
+  const chip = event.target.closest('.chip-token');
+  if (!chip) return;
+  if (confirm(`「${chip.textContent}」タグを削除しますか？`)) {
+    chip.remove();
+    updateModalPreview();
+  }
+}
+
+/** カーソル位置にタグを挿入（アラートモーダル用） */
+function insertAlertChipToEditor(key) {
+  const editor = document.getElementById('modal-message-editor');
+  if (!editor) return;
+  editor.focus();
+  const sel = window.getSelection();
+  const chip = createChipElement(key, ALERT_CHIP_DEFS[key]);
+  if (!sel || !sel.rangeCount || !editor.contains(sel.getRangeAt(0).commonAncestorContainer)) {
+    editor.appendChild(chip);
+  } else {
+    const range = sel.getRangeAt(0);
+    range.deleteContents();
+    range.insertNode(chip);
+    range.setStartAfter(chip);
+    range.setEndAfter(chip);
+    sel.removeAllRanges();
+    sel.addRange(range);
+  }
+  updateModalPreview();
 }
 
 /** レイドチャットモーダルを開く */
@@ -902,7 +1032,7 @@ function openRaidChatModal() {
 
   // チップエディタを設定
   const editor = document.getElementById('raid-chat-editor');
-  editor.innerHTML = templateToEditorHtml(rc.messageTemplate || '');
+  editor.innerHTML = templateToEditorHtml(rc.messageTemplate || '', CHIP_DEFS);
 
   // シャウトアウトチェックボックス
   document.getElementById('raid-chat-shoutout').checked = rc.shoutout ?? false;

@@ -1,6 +1,6 @@
 {
   "name": "twitch-companion",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Twitch配信者向けアラート＆定期コメントツール",
   "main": "main.js",
   "scripts": {
@@ -14,17 +14,20 @@
     "electron-builder": "^24.13.0"
   },
   "dependencies": {
+    "dotenv": "^17.4.2",
     "tmi.js": "^1.8.5",
     "ws": "^8.17.0"
   },
   "build": {
     "appId": "com.hinoki.twitch-companion",
-    "productName": "Twitch Companion",
+    "productName": "コアたん",
+    "asar": false,
     "directories": {
       "output": "release"
     },
     "win": {
-      "target": "nsis"
+      "target": "nsis",
+      "icon": "build/icon.png"
     }
   }
 }

@@ -3,10 +3,11 @@ const { BrowserWindow } = require('electron');
 const https = require('https');
 const crypto = require('crypto');
 
-const CLIENT_ID = 'qcwtri71a1vzt8dndxmy1sebrz7p5u';
+const CLIENT_ID = process.env.TWITCH_CLIENT_ID || 'qcwtri71a1vzt8dndxmy1sebrz7p5u';
 const REDIRECT_URI = 'http://localhost:3000';
 const SCOPES = [
   'moderator:read:chatters',
+  'moderator:read:followers',
   'channel:read:subscriptions',
   'bits:read',
   'channel:read:redemptions',

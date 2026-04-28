@@ -8,3 +8,6 @@ settings.json
 assets/custom/
 .env
 .env.local
+mockup.html
+テスター向けマニュアル.md
+docs/superpowers/

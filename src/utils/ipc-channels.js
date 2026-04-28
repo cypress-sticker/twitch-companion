@@ -36,4 +36,11 @@ module.exports = {
 
   // Test
   ALERT_TEST: 'alert:test',
+  RAID_CHAT_TEST: 'raid-chat:test',
+
+  // Dialogs
+  CONFIRM_RESET: 'confirm-reset',
+
+  // Preview
+  PREVIEW_PERIODIC: 'preview-periodic',
 };

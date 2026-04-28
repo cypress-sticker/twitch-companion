@@ -6,7 +6,7 @@
 
 ## バグ報告・機能提案
 
-[Issues](https://github.com/tky1192tky/twitch-companion/issues) からお気軽にどうぞ。  
+[Issues](https://github.com/cypress-sticker/twitch-companion/issues) からお気軽にどうぞ。  
 以下を書いてもらえると助かります：
 
 - **バグ報告**: 再現手順、期待する動作、実際の動作、環境（OSバージョン、アプリバージョン）

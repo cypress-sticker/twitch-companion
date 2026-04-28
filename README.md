@@ -3,8 +3,8 @@
 **配信をまるっと支える、Twitch配信者向け総合アプリ**
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/tky1192tky/twitch-companion/releases)
-[![Version](https://img.shields.io/badge/Version-0.1.1-green.svg)](https://github.com/tky1192tky/twitch-companion/releases)
+[![Platform: Windows](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/cypress-sticker/twitch-companion/releases)
+[![Version](https://img.shields.io/badge/Version-0.1.1-green.svg)](https://github.com/cypress-sticker/twitch-companion/releases)
 
 [English README](README.en.md)
 
@@ -41,7 +41,7 @@
 
 ## ダウンロード
 
-[Releases](https://github.com/tky1192tky/twitch-companion/releases) から最新の `.exe` または `.zip` をダウンロードしてください。
+[Releases](https://github.com/cypress-sticker/twitch-companion/releases) から最新の `.exe` または `.zip` をダウンロードしてください。
 
 > **初回起動時の警告について**  
 > 「WindowsによってPCが保護されました」と表示される場合は、「詳細情報」→「実行」でご利用いただけます。コード署名に未対応のため表示される警告であり、ウイルスではありません。
@@ -66,7 +66,7 @@
 ### 手順
 
 ```bash
-git clone https://github.com/tky1192tky/twitch-companion.git
+git clone https://github.com/cypress-sticker/twitch-companion.git
 cd twitch-companion
 npm install
 ```
